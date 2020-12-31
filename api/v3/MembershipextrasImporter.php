@@ -1,13 +1,18 @@
 <?php
 
-function civicrm_api3_membershipextras_importer_import($params) {
-  return civicrm_api3_create_success(
-    true,
-    []
-  );
+function civicrm_api3_membershipextras_importer_create($params) {
+  try {
+    $importer = new CRM_Membershipextrasimporterapi_CSVRowImporter($params);
+    $importer->import();
+  }
+  catch (Exception $exception) {
+    return civicrm_api3_create_error($exception->getMessage());
+  }
+
+  return civicrm_api3_create_success(1, $params);
 }
 
-function _civicrm_api3_membershipextras_importer_import_spec(&$params) {
+function _civicrm_api3_membershipextras_importer_create_spec(&$params) {
   $params['contact_id'] = [
     'title' => 'Contact Id',
     'type' => CRM_Utils_Type::T_INT,
@@ -58,7 +63,7 @@ function _civicrm_api3_membershipextras_importer_import_spec(&$params) {
   ];
 
   $params['payment_plan_cycle_day'] = [
-    'title' => 'Payment Plan Create Date',
+    'title' => 'Payment Plan Cycle Day',
     'type' => CRM_Utils_Type::T_INT,
   ];
 
@@ -77,4 +82,11 @@ function _civicrm_api3_membershipextras_importer_import_spec(&$params) {
     'title' => 'Payment Plan Status',
     'type' => CRM_Utils_Type::T_STRING,
   ];
+
+  $params['payment_plan_payment_method'] = [
+    'title' => 'Payment Plan Payment Method',
+    'type' => CRM_Utils_Type::T_STRING,
+    'api.required' => 1,
+  ];
+
 }
