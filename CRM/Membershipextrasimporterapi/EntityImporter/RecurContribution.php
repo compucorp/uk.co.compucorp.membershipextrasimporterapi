@@ -11,6 +11,8 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContribution {
 
   private $contactId;
 
+  private $cachedValues;
+
   public function __construct($rowData, $contactId) {
     $this->rowData = $rowData;
     $this->contactId = $contactId;
@@ -137,13 +139,18 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContribution {
       $statusName = $this->rowData['payment_plan_status'];
     }
 
-    $sqlQuery = "SELECT cov.value as id FROM civicrm_option_value cov 
+    if (!isset($this->cachedValues['recur_contribution_statuses'])) {
+      $sqlQuery = "SELECT cov.name as name, cov.value as id FROM civicrm_option_value cov 
                   INNER JOIN civicrm_option_group cog ON cov.option_group_id = cog.id 
-                  WHERE cog.name = 'contribution_recur_status' AND cov.name = %1";
-    $result = CRM_Core_DAO::executeQuery($sqlQuery, [1 => [$statusName, 'String']]);
+                  WHERE cog.name = 'contribution_recur_status'";
+      $result = CRM_Core_DAO::executeQuery($sqlQuery);
+      while ($result->fetch()) {
+        $this->cachedValues['recur_contribution_statuses'][$result->name] = $result->id;
+      }
+    }
 
-    if ($result->fetch()) {
-      return $result->id;
+    if (!empty($this->cachedValues['recur_contribution_statuses'][$statusName])) {
+      return $this->cachedValues['recur_contribution_statuses'][$statusName];
     }
 
     throw new CRM_Membershipextrasimporterapi_Exception_InvalidRecurContributionFieldException('Invalid payment plan "Status"', 200);
@@ -151,22 +158,32 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContribution {
 
   private function getPaymentProcessorId() {
     // todo: later to add validation to ensure that direct debit fields exist if the payment processor is 'direct debit'.
-    $sqlQuery = "SELECT id FROM civicrm_payment_processor WHERE name = %1";
-    $result = CRM_Core_DAO::executeQuery($sqlQuery, [1 => [$this->rowData['payment_plan_payment_processor'], 'String']]);
+    if (!isset($this->cachedValues['payment_processors'])) {
+      $sqlQuery = "SELECT id, name FROM civicrm_payment_processor WHERE is_test = 0";
+      $result = CRM_Core_DAO::executeQuery($sqlQuery);
+      while ($result->fetch()) {
+        $this->cachedValues['payment_processors'][$result->name] = $result->id;
+      }
+    }
 
-    if ($result->fetch()) {
-      return $result->id;
+    if (!empty($this->cachedValues['payment_processors'][$this->rowData['payment_plan_payment_processor']])) {
+      return $this->cachedValues['payment_processors'][$this->rowData['payment_plan_payment_processor']];
     }
 
     throw new CRM_Membershipextrasimporterapi_Exception_InvalidRecurContributionFieldException('Invalid payment plan "Payment Processor"', 300);
   }
 
   private function getFinancialTypeId() {
-    $sqlQuery = "SELECT id FROM civicrm_financial_type WHERE name = %1";
-    $result = CRM_Core_DAO::executeQuery($sqlQuery, [1 => [$this->rowData['payment_plan_financial_type'], 'String']]);
+    if (!isset($this->cachedValues['financial_types'])) {
+      $sqlQuery = "SELECT id, name FROM civicrm_financial_type";
+      $result = CRM_Core_DAO::executeQuery($sqlQuery);
+      while ($result->fetch()) {
+        $this->cachedValues['financial_types'][$result->name] = $result->id;
+      }
+    }
 
-    if ($result->fetch()) {
-      return $result->id;
+    if (!empty($this->cachedValues['financial_types'][$this->rowData['payment_plan_financial_type']])) {
+      return $this->cachedValues['financial_types'][$this->rowData['payment_plan_financial_type']];
     }
 
     throw new CRM_Membershipextrasimporterapi_Exception_InvalidRecurContributionFieldException('Invalid payment plan "Financial Type"', 400);
@@ -182,7 +199,21 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContribution {
       return $result->id;
     }
 
-    throw new CRM_Membershipextrasimporterapi_Exception_InvalidRecurContributionFieldException('Incorrect Invalid payment plan "Payment Method"', 500);
+    if (!isset($this->cachedValues['payment_methods'])) {
+      $sqlQuery = "SELECT cov.name as name, cov.value as id FROM civicrm_option_value cov 
+                  INNER JOIN civicrm_option_group cog ON cov.option_group_id = cog.id 
+                  WHERE cog.name = 'payment_instrument'";
+      $result = CRM_Core_DAO::executeQuery($sqlQuery);
+      while ($result->fetch()) {
+        $this->cachedValues['payment_methods'][$result->name] = $result->id;
+      }
+    }
+
+    if (!empty($this->cachedValues['payment_methods'][$this->rowData['payment_plan_payment_method']])) {
+      return $this->cachedValues['payment_methods'][$this->rowData['payment_plan_payment_method']];
+    }
+
+    throw new CRM_Membershipextrasimporterapi_Exception_InvalidRecurContributionFieldException('Invalid payment plan "Payment Method"', 500);
   }
 
   private function isAutoRenew() {

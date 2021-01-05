@@ -438,7 +438,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContributionTest exten
   }
 
   private function getRecurContributionPaymentProcessorId($ppName) {
-    $sqlQuery = "SELECT id FROM civicrm_payment_processor WHERE name = %1";
+    $sqlQuery = "SELECT id FROM civicrm_payment_processor WHERE name = %1 and is_test = 0";
     $result = CRM_Core_DAO::executeQuery($sqlQuery, [1 => [$ppName, 'String']]);
     $result->fetch();
     return $result->id;
