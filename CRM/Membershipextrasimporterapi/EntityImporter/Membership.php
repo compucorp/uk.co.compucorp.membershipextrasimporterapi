@@ -8,6 +8,8 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Membership {
 
   private $contactId;
 
+  private $cachedValues;
+
   public function __construct($rowData, $contactId, $recurContributionId) {
     $this->rowData = $rowData;
     $this->contactId = $contactId;
@@ -15,6 +17,12 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Membership {
   }
 
   public function import() {
+    if (empty($this->rowData['membership_external_id'])) {
+      // todo : when the line item importer is created,
+      // we need to throw an exception if this field  is not set and line_item.entity_table = "civicrm_membership"
+      return NULL;
+    }
+
     $membershipId = $this->getMembershipIdIfExist();
     if ($membershipId) {
       return $membershipId;
@@ -49,10 +57,9 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Membership {
     return NULL;
   }
 
-
   private function prepareSqlParams() {
     $membershipTypeId = $this->getMembershipTypeId();
-    $membershipStatusId = $this->getMembershipStatusId();
+    $membershipStatusId = $this->getMembershipStatusId($membershipTypeId);
     $statusOverrideEndDate = $this->getStatusOverrideEndDate();
     $isOverriddenStatus = $this->isOverriddenStatus($statusOverrideEndDate);
     $joinDate = $this->formatRowDate('membership_join_date', 'Join Date', TRUE);
@@ -78,34 +85,45 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Membership {
       throw new CRM_Membershipextrasimporterapi_Exception_InvalidMembershipFieldException('Membership type is required field', 100);
     }
 
-    $sqlQuery = "SELECT id FROM civicrm_membership_type WHERE name = %1";
-    $result = CRM_Core_DAO::executeQuery($sqlQuery, [1 => [$this->rowData['membership_type'], 'String']]);
+    if (!isset($this->cachedValues['membership_types'])) {
+      $sqlQuery = "SELECT id, name FROM civicrm_membership_type";
+      $result = CRM_Core_DAO::executeQuery($sqlQuery);
+      while ($result->fetch()) {
+        $this->cachedValues['membership_types'][$result->name] = $result->id;
+      }
+    }
 
-    if ($result->fetch()) {
-      return $result->id;
+    if (!empty($this->cachedValues['membership_types'][$this->rowData['membership_type']])) {
+      return $this->cachedValues['membership_types'][$this->rowData['membership_type']];
     }
 
     throw new CRM_Membershipextrasimporterapi_Exception_InvalidMembershipFieldException('Invalid membership type', 200);
   }
 
-  private function getMembershipStatusId() {
+  private function getMembershipStatusId($membershipTypeId) {
     if (empty($this->rowData['membership_status'])) {
       $statusId = CRM_Member_BAO_MembershipStatus::getMembershipStatusByDate(
         $this->rowData['membership_start_date'],
         $this->rowData['membership_end_date'],
         $this->rowData['membership_join_date'],
-        'now',
-        1
+        'today',
+        TRUE,
+        $membershipTypeId
       );
 
       return $statusId['id'];
     }
 
-    $sqlQuery = "SELECT id FROM civicrm_membership_status WHERE name = %1";
-    $result = CRM_Core_DAO::executeQuery($sqlQuery, [1 => [$this->rowData['membership_status'], 'String']]);
+    if (!isset($this->cachedValues['membership_statuses'])) {
+      $sqlQuery = "SELECT id, name FROM civicrm_membership_status";
+      $result = CRM_Core_DAO::executeQuery($sqlQuery);
+      while ($result->fetch()) {
+        $this->cachedValues['membership_statuses'][$result->name] = $result->id;
+      }
+    }
 
-    if ($result->fetch()) {
-      return $result->id;
+    if (!empty($this->cachedValues['membership_statuses'][$this->rowData['membership_status']])) {
+      return $this->cachedValues['membership_statuses'][$this->rowData['membership_status']];
     }
 
     throw new CRM_Membershipextrasimporterapi_Exception_InvalidMembershipFieldException('Invalid membership status', 300);
@@ -128,7 +146,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Membership {
       return 0;
     }
 
-   return 1;
+    return 1;
   }
 
   private function formatRowDate($dateColumnName, $columnLabel, $isRequired = FALSE) {
