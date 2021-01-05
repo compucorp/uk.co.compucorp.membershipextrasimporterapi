@@ -23,6 +23,7 @@ function _civicrm_api3_membershipextras_importer_create_spec(&$params) {
     'type' => CRM_Utils_Type::T_STRING,
   ];
 
+  // Recur Contribution (Payment Plan)
   $params['payment_plan_external_id'] = [
     'title' => 'Payment Plan External Id',
     'type' => CRM_Utils_Type::T_STRING,
@@ -89,4 +90,44 @@ function _civicrm_api3_membershipextras_importer_create_spec(&$params) {
     'api.required' => 1,
   ];
 
+  // Membership
+  $params['membership_external_id'] = [
+    'title' => 'Membership External Id',
+    'type' => CRM_Utils_Type::T_STRING,
+  ];
+
+  $params['membership_type'] = [
+    'title' => 'Membership Type',
+    'type' => CRM_Utils_Type::T_STRING,
+  ];
+
+  $params['membership_join_date'] = [
+    'title' => 'Membership Join Date',
+    'type' => CRM_Utils_Type::T_DATE,
+  ];
+
+  $params['membership_start_date'] = [
+    'title' => 'Membership Start Date',
+    'type' => CRM_Utils_Type::T_DATE,
+  ];
+
+  $params['membership_end_date'] = [
+    'title' => 'Membership End Date',
+    'type' => CRM_Utils_Type::T_DATE,
+  ];
+
+  $params['membership_status'] = [
+    'title' => 'Membership Status',
+    'type' => CRM_Utils_Type::T_STRING,
+  ];
+
+  $params['membership_is_status_overridden'] = [
+    'title' => 'Membership Status Overridden?',
+    'type' => CRM_Utils_Type::T_INT,
+  ];
+
+  $params['membership_status_override_end_date'] = [
+    'title' => 'Membership Status Override End Date',
+    'type' => CRM_Utils_Type::T_DATE,
+  ];
 }
