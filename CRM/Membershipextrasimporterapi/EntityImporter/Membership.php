@@ -65,6 +65,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Membership {
     $joinDate = $this->formatRowDate('membership_join_date', 'Join Date', TRUE);
     $startDate = $this->formatRowDate('membership_start_date', 'Start Date', TRUE);
     $endDate = $this->formatRowDate('membership_end_date', 'End Date', TRUE);
+    $isPayLater = 1;
 
     return [
       1 => [$this->contactId, 'Integer'],
@@ -73,7 +74,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Membership {
       4 => [$startDate, 'Date'],
       5 => [$endDate, 'Date'],
       6 => [$membershipStatusId, 'Integer'],
-      7 => [1, 'Integer'],
+      7 => [$isPayLater, 'Integer'],
       8 => [$this->recurContributionId, 'Integer'],
       9 => [$isOverriddenStatus, 'Integer'],
       10 => [$statusOverrideEndDate, 'Date'],
@@ -139,14 +140,14 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Membership {
 
   private function isOverriddenStatus($statusOverrideEndDate) {
     if (!empty($statusOverrideEndDate)) {
-      return 2;
+      return CRM_Member_StatusOverrideTypes::UNTIL_DATE;
     }
 
     if (empty($this->rowData['membership_is_status_overridden'])) {
-      return 0;
+      return CRM_Member_StatusOverrideTypes::NO;
     }
 
-    return 1;
+    return CRM_Member_StatusOverrideTypes::PERMANENT;
   }
 
   private function formatRowDate($dateColumnName, $columnLabel, $isRequired = FALSE) {

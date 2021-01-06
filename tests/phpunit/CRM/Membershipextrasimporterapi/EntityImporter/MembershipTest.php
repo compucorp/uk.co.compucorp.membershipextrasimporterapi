@@ -223,14 +223,14 @@ class CRM_Membershipextrasimporterapi_EntityImporter_MembershipTest extends Base
 
   public function testImportWillSetCorrectIsStatusOverrideValue() {
     $this->sampleRowData['membership_external_id'] = 'test15';
-    $this->sampleRowData['membership_is_status_overridden'] = 1;
+    $this->sampleRowData['membership_is_status_overridden'] = CRM_Member_StatusOverrideTypes::PERMANENT;
 
     $membershipImporter = new MembershipImporter($this->sampleRowData, $this->contactId, $this->recurContributionId);
     $newMembershipId = $membershipImporter->import();
 
     $newMembership = $this->getMembershipById($newMembershipId);
 
-    $this->assertEquals(1, $newMembership['is_override']);
+    $this->assertEquals(CRM_Member_StatusOverrideTypes::PERMANENT, $newMembership['is_override']);
   }
 
   public function testImportWillDefaultIsStatusOverrideToNo() {
@@ -242,7 +242,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_MembershipTest extends Base
 
     $newMembership = $this->getMembershipById($newMembershipId);
 
-    $this->assertEquals(0, $newMembership['is_override']);
+    $this->assertEquals(CRM_Member_StatusOverrideTypes::NO, $newMembership['is_override']);
   }
 
   public function testImportWithOverrideEndDateSetWillDefaultIsStatusOverrideToCorrectValue() {
@@ -254,7 +254,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_MembershipTest extends Base
 
     $newMembership = $this->getMembershipById($newMembershipId);
 
-    $this->assertEquals(2, $newMembership['is_override']);
+    $this->assertEquals(CRM_Member_StatusOverrideTypes::UNTIL_DATE, $newMembership['is_override']);
   }
 
   public function testImportWithOverrideEndDateWillSetItToCorrectValue() {
