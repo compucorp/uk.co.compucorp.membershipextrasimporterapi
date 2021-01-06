@@ -14,6 +14,9 @@ class CRM_Membershipextrasimporterapi_CSVRowImporter {
   public function import() {
     $recurContributionImporter = new CRM_Membershipextrasimporterapi_EntityImporter_RecurContribution($this->rowData, $this->contactId);
     $recurContributionId = $recurContributionImporter->import();
+
+    $membershipImporter = new CRM_Membershipextrasimporterapi_EntityImporter_Membership($this->rowData, $this->contactId, $recurContributionId);
+    $membershipId = $membershipImporter->import();
   }
 
   private function getContactId() {
