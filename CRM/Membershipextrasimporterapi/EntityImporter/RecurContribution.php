@@ -190,15 +190,6 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContribution {
   }
 
   private function getPaymentMethodId() {
-    $sqlQuery = "SELECT cov.value as id FROM civicrm_option_value cov 
-                  INNER JOIN civicrm_option_group cog ON cov.option_group_id = cog.id 
-                  WHERE cog.name = 'payment_instrument'  AND cov.name = %1";
-    $result = CRM_Core_DAO::executeQuery($sqlQuery, [1 => [$this->rowData['payment_plan_payment_method'], 'String']]);
-
-    if ($result->fetch()) {
-      return $result->id;
-    }
-
     if (!isset($this->cachedValues['payment_methods'])) {
       $sqlQuery = "SELECT cov.name as name, cov.value as id FROM civicrm_option_value cov 
                   INNER JOIN civicrm_option_group cog ON cov.option_group_id = cog.id 

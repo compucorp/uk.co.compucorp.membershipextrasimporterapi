@@ -130,4 +130,34 @@ function _civicrm_api3_membershipextras_importer_create_spec(&$params) {
     'title' => 'Membership Status Override End Date',
     'type' => CRM_Utils_Type::T_DATE,
   ];
+
+  // Contribution
+  $params['contribution_external_id'] = [
+    'title' => 'Contribution External Id',
+    'type' => CRM_Utils_Type::T_STRING,
+    'api.required' => 1,
+  ];
+
+  $params['contribution_financial_type'] = [
+    'title' => 'Contribution Financial Type',
+    'type' => CRM_Utils_Type::T_STRING,
+    'api.required' => 1,
+  ];
+
+  $params['contribution_payment_method'] = [
+    'title' => 'Contribution Payment Method',
+    'type' => CRM_Utils_Type::T_STRING,
+    'api.required' => 1,
+  ];
+
+  $params['contribution_received_date'] = [
+    'title' => 'Contribution Received Date',
+    'type' => CRM_Utils_Type::T_DATE,
+    'api.required' => 1,
+  ];
+
+  $params['contribution_status'] = [
+    'title' => 'Contribution Status',
+    'type' => CRM_Utils_Type::T_STRING,
+  ];
 }
