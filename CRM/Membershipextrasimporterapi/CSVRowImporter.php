@@ -1,5 +1,10 @@
 <?php
 
+use CRM_Membershipextrasimporterapi_EntityImporter_RecurContribution as RecurContributionImporter;
+use CRM_Membershipextrasimporterapi_EntityImporter_Membership as MembershipImporter;
+use CRM_Membershipextrasimporterapi_EntityImporter_Contribution as ContributionImporter;
+use CRM_Membershipextrasimporterapi_EntityCreator_MembershipPayment as MembershipPaymentCreator;
+
 class CRM_Membershipextrasimporterapi_CSVRowImporter {
 
   private $rowData;
@@ -12,14 +17,17 @@ class CRM_Membershipextrasimporterapi_CSVRowImporter {
   }
 
   public function import() {
-    $recurContributionImporter = new CRM_Membershipextrasimporterapi_EntityImporter_RecurContribution($this->rowData, $this->contactId);
+    $recurContributionImporter = new RecurContributionImporter($this->rowData, $this->contactId);
     $recurContributionId = $recurContributionImporter->import();
 
-    $membershipImporter = new CRM_Membershipextrasimporterapi_EntityImporter_Membership($this->rowData, $this->contactId, $recurContributionId);
+    $membershipImporter = new MembershipImporter($this->rowData, $this->contactId, $recurContributionId);
     $membershipId = $membershipImporter->import();
 
-    $contributionImporter = new CRM_Membershipextrasimporterapi_EntityImporter_Contribution($this->rowData, $this->contactId, $recurContributionId);
+    $contributionImporter = new ContributionImporter($this->rowData, $this->contactId, $recurContributionId);
     $contributionId = $contributionImporter->import();
+
+    $membershipPaymentCreator = new MembershipPaymentCreator($membershipId, $contributionId);
+    $membershipPaymentCreator->create();
   }
 
   private function getContactId() {
