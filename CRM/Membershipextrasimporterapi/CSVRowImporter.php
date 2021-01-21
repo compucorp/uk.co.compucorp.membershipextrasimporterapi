@@ -4,6 +4,7 @@ use CRM_Membershipextrasimporterapi_EntityImporter_RecurContribution as RecurCon
 use CRM_Membershipextrasimporterapi_EntityImporter_Membership as MembershipImporter;
 use CRM_Membershipextrasimporterapi_EntityImporter_Contribution as ContributionImporter;
 use CRM_Membershipextrasimporterapi_EntityCreator_MembershipPayment as MembershipPaymentCreator;
+use CRM_Membershipextrasimporterapi_EntityImporter_LineItem as LineItemImporter;
 
 class CRM_Membershipextrasimporterapi_CSVRowImporter {
 
@@ -28,6 +29,9 @@ class CRM_Membershipextrasimporterapi_CSVRowImporter {
 
     $membershipPaymentCreator = new MembershipPaymentCreator($membershipId, $contributionId);
     $membershipPaymentCreator->create();
+
+    $lineItemImporter = new LineItemImporter($this->rowData, $contributionId, $membershipId);
+    $lineItemImporter->import();
   }
 
   private function getContactId() {

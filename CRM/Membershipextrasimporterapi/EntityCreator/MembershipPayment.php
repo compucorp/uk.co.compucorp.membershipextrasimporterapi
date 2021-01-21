@@ -18,7 +18,7 @@ class CRM_Membershipextrasimporterapi_EntityCreator_MembershipPayment {
    *   True if successfully created or False if not
    */
   public function create() {
-    if($this->isRecordAlreadyCreated()) {
+    if ($this->isRecordAlreadyCreated()) {
       return FALSE;
     }
 
