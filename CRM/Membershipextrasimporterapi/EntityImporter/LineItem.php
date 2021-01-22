@@ -170,6 +170,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItem {
   private function getPriceFieldValueDetailsById($priceFieldValueId) {
     $dao = CRM_Core_DAO::executeQuery("SELECT * FROM civicrm_price_field_value WHERE id = {$priceFieldValueId}");
     $dao->fetch();
+
     return $dao->toArray();
   }
 
@@ -178,6 +179,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItem {
     $dao = CRM_Core_DAO::executeQuery("SELECT * FROM civicrm_price_field_value WHERE membership_type_id = {$membershipTypeId} 
                                        ORDER BY id ASC LIMIT 1");
     $dao->fetch();
+
     return $dao->toArray();
   }
 
@@ -245,37 +247,47 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItem {
 
     $dao = CRM_Core_DAO::executeQuery('SELECT LAST_INSERT_ID() as id');
     $dao->fetch();
+
     return $dao->id;
   }
 
   private function getToFinancialAccountId($financialTypeId) {
-    // this is reserved value and will always equal such value on any CiviCRM site
+    // This is reserved value and will always equal such value on any CiviCRM site
     $incomeAccountRelationshipId = 1;
 
     $sqlQuery = "SELECT financial_account_id FROM civicrm_entity_financial_account 
                    WHERE entity_table = 'civicrm_financial_type' AND entity_id = {$financialTypeId} AND account_relationship = {$incomeAccountRelationshipId}";
     $result = CRM_Core_DAO::executeQuery($sqlQuery);
     $result->fetch();
+
     return $result->financial_account_id;
   }
 
   private function getFinancialItemStatusId() {
     $contributionStatusId = $this->contribution['contribution_status_id'];
 
-    // hardcoded Ids are used for efficiency reasons
+    // Hardcoded Ids are used for efficiency reasons
     // and because they are also reserved and their ids
     // are always the same on any CiviCRM site.
+
+    // 1 = Completed, 9 = Pending Refund
     $paidContributionStatues = [1, 9];
+    // 2 = Pending, 5 = In Progress
     $unpaidContributionStatues = [2, 5];
+    // 8 = Partially paid
     $partiallyPaidContributionStatues = [8];
 
+    $lineStatusId = NULL;
     if (in_array($contributionStatusId, $paidContributionStatues)) {
+      // 1 = Paid
       $lineStatusId = 1;
     }
     elseif (in_array($contributionStatusId, $unpaidContributionStatues)) {
+      // 3 = Unpaid
       $lineStatusId = 3;
     }
     elseif (in_array($contributionStatusId, $partiallyPaidContributionStatues)) {
+      // 2 = Partially paid
       $lineStatusId = 2;
     }
 
@@ -297,6 +309,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItem {
   private function getContributionFinancialTrxnId() {
     $dao = CRM_Core_DAO::executeQuery("SELECT financial_trxn_id FROM civicrm_entity_financial_trxn WHERE entity_table = 'civicrm_contribution' AND entity_id = {$this->contributionId} LIMIT 1");
     $dao->fetch();
+
     return $dao->financial_trxn_id;
   }
 

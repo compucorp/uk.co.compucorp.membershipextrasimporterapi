@@ -31,7 +31,7 @@ class CRM_Membershipextrasimporterapi_EntityCreator_MembershipPaymentTest extend
 
     $this->contributionId = ContributionFabricator::fabricate([
       'contact_id' => $this->contactId,
-      'financial_type_id' => 1,
+      'financial_type_id' => 'Member Dues',
       'total_amount' => 50,
     ])['id'];
   }
