@@ -160,4 +160,58 @@ function _civicrm_api3_membershipextras_importer_create_spec(&$params) {
     'title' => 'Contribution Status',
     'type' => CRM_Utils_Type::T_STRING,
   ];
+
+  // Line Item
+  $params['line_item_entity_table'] = [
+    'title' => 'Order Line Entity Type',
+    'type' => CRM_Utils_Type::T_STRING,
+    'api.required' => 1,
+  ];
+
+  $params['line_item_entity_id'] = [
+    'title' => 'Order Line Entity Id',
+    'type' => CRM_Utils_Type::T_INT,
+  ];
+
+  $params['line_item_label'] = [
+    'title' => 'Order Line Label',
+    'type' => CRM_Utils_Type::T_STRING,
+  ];
+
+  $params['line_item_quantity'] = [
+    'title' => 'Order Line Quantity',
+    'type' => CRM_Utils_Type::T_INT,
+  ];
+
+  $params['line_item_unit_price'] = [
+    'title' => 'Order Line Unit Price',
+    'type' => CRM_Utils_Type::T_MONEY,
+    'api.required' => 1,
+  ];
+
+  $params['line_item_financial_type'] = [
+    'title' => 'Order Line Financial Type',
+    'type' => CRM_Utils_Type::T_STRING,
+    'api.required' => 1,
+  ];
+
+  $params['line_item_tax_amount'] = [
+    'title' => 'Order Line Tax Amount',
+    'type' => CRM_Utils_Type::T_STRING,
+  ];
+
+  $params['line_item_auto_renew'] = [
+    'title' => 'Order Line Auto Renew',
+    'type' => CRM_Utils_Type::T_INT,
+  ];
+
+  $params['line_item_price_field_id'] = [
+    'title' => 'Price Field Id',
+    'type' => CRM_Utils_Type::T_INT,
+  ];
+
+  $params['line_item_price_field_value_id'] = [
+    'title' => 'Price Field value Id',
+    'type' => CRM_Utils_Type::T_INT,
+  ];
 }
