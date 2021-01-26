@@ -214,4 +214,45 @@ function _civicrm_api3_membershipextras_importer_create_spec(&$params) {
     'title' => 'Price Field value Id',
     'type' => CRM_Utils_Type::T_INT,
   ];
+
+  // Direct Debit Mandate
+  $params['direct_debit_mandate_reference'] = [
+    'title' => 'Direct Debit Mandate Reference',
+    'type' => CRM_Utils_Type::T_STRING,
+  ];
+
+  $params['direct_debit_mandate_bank_name'] = [
+    'title' => 'Direct Debit Mandate Bank Name',
+    'type' => CRM_Utils_Type::T_STRING,
+  ];
+
+  $params['direct_debit_mandate_account_holder'] = [
+    'title' => 'Direct Debit Mandate Account Holder Name',
+    'type' => CRM_Utils_Type::T_STRING,
+  ];
+
+  $params['direct_debit_mandate_account_number'] = [
+    'title' => 'Direct Debit Mandate Account Number',
+    'type' => CRM_Utils_Type::T_STRING,
+  ];
+
+  $params['direct_debit_mandate_sort_code'] = [
+    'title' => 'Direct Debit Mandate Sort Code',
+    'type' => CRM_Utils_Type::T_STRING,
+  ];
+
+  $params['direct_debit_mandate_code'] = [
+    'title' => 'Direct Debit Mandate Code',
+    'type' => CRM_Utils_Type::T_STRING,
+  ];
+
+  $params['direct_debit_mandate_start_date'] = [
+    'title' => 'Direct Debit Mandate Start Date',
+    'type' => CRM_Utils_Type::T_DATE,
+  ];
+
+  $params['direct_debit_mandate_originator_number'] = [
+    'title' => 'Direct Debit Mandate Originator Number',
+    'type' => CRM_Utils_Type::T_STRING,
+  ];
 }
