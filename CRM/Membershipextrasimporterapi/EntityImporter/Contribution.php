@@ -144,7 +144,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Contribution {
   }
 
   private function getTotalAmount() {
-    //todo : figure out a way to calculate amount, defaulting it to zero for now
+    // the total amount will be set as part of line item creation and not here
     return 0;
   }
 

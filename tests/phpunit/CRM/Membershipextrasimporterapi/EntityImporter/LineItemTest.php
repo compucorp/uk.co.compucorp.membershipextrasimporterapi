@@ -29,7 +29,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItemTest extends BaseHe
   public function setUp() {
     $this->contactId = ContactFabricator::fabricate()['id'];
 
-    $contributionParams = ['contact_id' => $this->contactId, 'financial_type_id' => 'Member Dues', 'receive_date' => date('Y-m-d'), 'total_amount' => 50, 'skipLineItem' => 1];
+    $contributionParams = ['contact_id' => $this->contactId, 'financial_type_id' => 'Member Dues', 'receive_date' => date('Y-m-d'), 'total_amount' => 0, 'skipLineItem' => 1];
     $this->contributionId = ContributionFabricator::fabricate($contributionParams)['id'];
 
     $this->studentMembershipTypeId = MembershipTypeFabricator::fabricate(['name' => 'Student', 'minimum_fee' => 50])['id'];
@@ -278,6 +278,24 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItemTest extends BaseHe
     $this->assertEquals($membershipTypePriceFieldDetails['id'], $newLineItem['price_field_value_id']);
   }
 
+  public function testImportWillUpdateContributionAmountToTheSumOfLineItems() {
+    $this->sampleRowData['line_item_unit_price'] = 50;
+    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId);
+    $lineItemImporter->import();
+
+    $secondLineItemParams = [
+      'line_item_entity_table' => 'civicrm_contribution',
+      'line_item_unit_price' => 30.5,
+      'line_item_financial_type' => 'Member Dues',
+    ];
+    $lineItemImporter = new LineItemImporter($secondLineItemParams, $this->contributionId, $this->membershipId);
+    $lineItemImporter->import();
+
+    $contribution = $this->getContributionById($this->contributionId);
+
+    $this->assertEquals($contribution['total_amount'], 80.5);
+  }
+
   private function getLineItemsByContributionId($contributionId) {
     $lineItemsIds = NULL;
 
@@ -310,6 +328,14 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItemTest extends BaseHe
                                        ORDER BY id ASC LIMIT 1");
     $dao->fetch();
     return $dao->toArray();
+  }
+
+  private function getContributionById($id) {
+    $sqlQuery = "SELECT * FROM civicrm_contribution WHERE id = %1";
+    $contribution = CRM_Core_DAO::executeQuery($sqlQuery, [1 => [$id, 'Integer']]);
+    $contribution->fetch();
+
+    return $contribution->toArray();
   }
 
 }

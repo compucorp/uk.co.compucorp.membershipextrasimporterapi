@@ -92,6 +92,8 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItem {
     $financialItemId = $this->createFinancialItemRecord($lineItemId, $mappedLineItemParams);
     $this->createEntityFinancialTransactionRecord($financialItemId, $mappedLineItemParams['line_total']);
 
+    $this->updateRelatedContributionAmount($mappedLineItemParams['line_total']);
+
     return $lineItemId;
   }
 
@@ -311,6 +313,11 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItem {
     $dao->fetch();
 
     return $dao->financial_trxn_id;
+  }
+
+  private function updateRelatedContributionAmount($lineItemTotalAmount) {
+    $sqlQuery = "UPDATE `civicrm_contribution` SET `total_amount` = (`total_amount` + %1)";
+    CRM_Core_DAO::executeQuery($sqlQuery, [1 => [$lineItemTotalAmount, 'Money']]);
   }
 
 }
