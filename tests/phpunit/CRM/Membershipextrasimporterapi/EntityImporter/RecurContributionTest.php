@@ -21,6 +21,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContributionTest exten
     'payment_plan_financial_type' => 'Member Dues',
     'payment_plan_payment_method' => 'EFT',
     'payment_plan_status' => 'Pending',
+    'payment_plan_currency'=> 'USD',
   ];
 
   private $contactId;
@@ -404,6 +405,40 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContributionTest exten
 
     $recurContributionImporter = new RecurContributionImporter($this->sampleRowData, $this->contactId);
     $recurContributionImporter->import();
+  }
+
+  public function testImportWithInvalidCurrencyThrowAnException() {
+    $this->sampleRowData['payment_plan_external_id'] = 'test31';
+    $this->sampleRowData['payment_plan_currency'] = 'FAKE';
+
+    $this->expectException(CRM_Membershipextrasimporterapi_Exception_InvalidRecurContributionFieldException::class);
+    $this->expectExceptionCode(900);
+
+    $recurContributionImporter = new RecurContributionImporter($this->sampleRowData, $this->contactId);
+    $recurContributionImporter->import();
+  }
+
+  public function testImportWithInactiveCurrencyWillThrowAnException() {
+    $this->sampleRowData['payment_plan_external_id'] = 'test32';
+    $this->sampleRowData['payment_plan_currency'] = 'JOD';
+
+    $this->expectException(CRM_Membershipextrasimporterapi_Exception_InvalidRecurContributionFieldException::class);
+    $this->expectExceptionCode(900);
+
+    $recurContributionImporter = new RecurContributionImporter($this->sampleRowData, $this->contactId);
+    $recurContributionImporter->import();
+  }
+
+  public function testImportSetsCorrectCurrencyValue() {
+    $this->sampleRowData['payment_plan_external_id'] = 'test33';
+    $this->sampleRowData['payment_plan_currency'] = 'USD';
+
+    $recurContributionImporter = new RecurContributionImporter($this->sampleRowData, $this->contactId);
+    $newRecurContributionId = $recurContributionImporter->import();
+
+    $newRecurContribution = $this->getRecurContributionsById($newRecurContributionId);
+
+    $this->assertEquals($this->sampleRowData['payment_plan_currency'], $newRecurContribution['currency']);
   }
 
   private function getRecurContributionsByContactId($contactId) {

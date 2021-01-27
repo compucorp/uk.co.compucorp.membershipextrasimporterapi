@@ -16,6 +16,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_ContributionTest extends Ba
     'contribution_payment_method' => 'EFT',
     'contribution_received_date' => '20190101013040',
     'contribution_status' => 'Pending',
+    'contribution_currency'=> 'USD',
   ];
 
   private $contactId;
@@ -242,6 +243,40 @@ class CRM_Membershipextrasimporterapi_EntityImporter_ContributionTest extends Ba
     $this->assertEquals($newContribution['contribution_status_id'], $result->status_id);
     $this->assertEquals($newContribution['payment_instrument_id'], $result->payment_instrument_id);
     $this->assertEquals($this->getPaymentProcessorFinancialAccountId($this->testPaymentProcessorId), $result->to_financial_account_id);
+  }
+
+  public function testImportWithInvalidCurrencyThrowAnException() {
+    $this->sampleRowData['contribution_external_id'] = 'test17';
+    $this->sampleRowData['contribution_currency'] = 'FAKE';
+
+    $this->expectException(CRM_Membershipextrasimporterapi_Exception_InvalidContributionFieldException::class);
+    $this->expectExceptionCode(400);
+
+    $contributionImporter = new ContributionImporter($this->sampleRowData, $this->contactId, $this->recurContributionId);
+    $contributionImporter->import();
+  }
+
+  public function testImportWithInactiveCurrencyWillThrowAnException() {
+    $this->sampleRowData['contribution_external_id'] = 'test18';
+    $this->sampleRowData['contribution_currency'] = 'JOD';
+
+    $this->expectException(CRM_Membershipextrasimporterapi_Exception_InvalidContributionFieldException::class);
+    $this->expectExceptionCode(400);
+
+    $contributionImporter = new ContributionImporter($this->sampleRowData, $this->contactId, $this->recurContributionId);
+    $contributionImporter->import();
+  }
+
+  public function testImportSetsCorrectCurrencyValue() {
+    $this->sampleRowData['contribution_external_id'] = 'test19';
+    $this->sampleRowData['contribution_currency'] = 'USD';
+
+    $contributionImporter = new ContributionImporter($this->sampleRowData, $this->contactId, $this->recurContributionId);
+    $newContributionId = $contributionImporter->import();
+
+    $newContribution = $this->getContributionById($newContributionId);
+
+    $this->assertEquals($this->sampleRowData['contribution_currency'], $newContribution['currency']);
   }
 
   private function getContributionsByContactId($contactId) {
