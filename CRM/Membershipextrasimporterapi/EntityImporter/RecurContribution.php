@@ -24,6 +24,8 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContribution {
       return $recurContributionId;
     }
 
+    $this->validateIfDirectDebitPaymentPlan();
+
     $sqlParams = $this->prepareSqlParams();
     $sqlQuery = "INSERT INTO `civicrm_contribution_recur` (`contact_id` , `amount` , `currency` , `frequency_unit` , `frequency_interval` , `installments` ,
             `start_date`, `contribution_status_id`, `payment_processor_id` , `financial_type_id` , `payment_instrument_id`, `auto_renew`, `create_date`,
@@ -52,6 +54,18 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContribution {
     }
 
     return NULL;
+  }
+
+  private function validateIfDirectDebitPaymentPlan() {
+    $isPaymentProcessorDirectDebit = ($this->rowData['payment_plan_payment_processor'] == 'Direct Debit');
+    $isPaymentMethodDirectDebit = ($this->rowData['payment_plan_payment_method'] == 'direct_debit');
+    if ($isPaymentProcessorDirectDebit  && !$isPaymentMethodDirectDebit) {
+      throw new CRM_Membershipextrasimporterapi_Exception_InvalidRecurContributionFieldException('Payment plan payment method should be direct debit if the payment processor is direct debit', 1000);
+    }
+
+    if (!$isPaymentProcessorDirectDebit  && $isPaymentMethodDirectDebit) {
+      throw new CRM_Membershipextrasimporterapi_Exception_InvalidRecurContributionFieldException('Payment plan payment processor should be direct debit if the payment method is direct debit', 1100);
+    }
   }
 
   /**
@@ -170,7 +184,6 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContribution {
   }
 
   private function getPaymentProcessorId() {
-    // todo: later to add validation to ensure that direct debit fields exist if the payment processor is 'direct debit'.
     if (!isset($this->cachedValues['payment_processors'])) {
       $sqlQuery = "SELECT id, name FROM civicrm_payment_processor WHERE is_test = 0";
       $result = CRM_Core_DAO::executeQuery($sqlQuery);

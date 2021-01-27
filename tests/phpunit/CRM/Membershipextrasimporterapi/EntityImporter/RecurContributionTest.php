@@ -441,6 +441,50 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContributionTest exten
     $this->assertEquals($this->sampleRowData['payment_plan_currency'], $newRecurContribution['currency']);
   }
 
+  public function testImportDirectDebitPaymentPlanShouldHaveBothPaymentProcessorAndPaymentMethodAsDirectDebit() {
+    $this->sampleRowData['payment_plan_external_id'] = 'test34';
+    $this->sampleRowData['payment_plan_payment_processor'] = 'Direct Debit';
+    $this->sampleRowData['payment_plan_payment_method'] = 'direct_debit';
+
+    $beforeImportIds = $this->getRecurContributionsByContactId($this->contactId);
+
+    $recurContributionImporter = new RecurContributionImporter($this->sampleRowData, $this->contactId);
+    $newRecurContributionId = $recurContributionImporter->import();
+
+    $afterImportIds = $this->getRecurContributionsByContactId($this->contactId);
+
+    $importSucceed = FALSE;
+    if (empty($beforeImportIds) && $afterImportIds[0] == $newRecurContributionId) {
+      $importSucceed = TRUE;
+    }
+
+    $this->assertTrue($importSucceed);
+  }
+
+  public function testImportDirectDebitPaymentPlanWithPaymentMethodThatIsNotDirectDebitThrowException() {
+    $this->sampleRowData['payment_plan_external_id'] = 'test35';
+    $this->sampleRowData['payment_plan_payment_processor'] = 'Direct Debit';
+    $this->sampleRowData['payment_plan_payment_method'] = 'EFT';
+
+    $this->expectException(CRM_Membershipextrasimporterapi_Exception_InvalidRecurContributionFieldException::class);
+    $this->expectExceptionCode(1000);
+
+    $recurContributionImporter = new RecurContributionImporter($this->sampleRowData, $this->contactId);
+    $recurContributionImporter->import();
+  }
+
+  public function testImportDirectDebitPaymentPlanWithPaymentProcessorThatIsNotDirectDebitThrowException() {
+    $this->sampleRowData['payment_plan_external_id'] = 'test35';
+    $this->sampleRowData['payment_plan_payment_processor'] = 'Paypal';
+    $this->sampleRowData['payment_plan_payment_method'] = 'direct_debit';
+
+    $this->expectException(CRM_Membershipextrasimporterapi_Exception_InvalidRecurContributionFieldException::class);
+    $this->expectExceptionCode(1100);
+
+    $recurContributionImporter = new RecurContributionImporter($this->sampleRowData, $this->contactId);
+    $recurContributionImporter->import();
+  }
+
   private function getRecurContributionsByContactId($contactId) {
     $recurContributionIds = NULL;
 
