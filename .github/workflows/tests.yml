@@ -5,6 +5,8 @@ on: pull_request
 jobs:
   run-unit-tests:
 
+    timeout-minutes: 7
+
     runs-on: ubuntu-latest
     container: compucorp/civicrm-buildkit:1.0.0
 
