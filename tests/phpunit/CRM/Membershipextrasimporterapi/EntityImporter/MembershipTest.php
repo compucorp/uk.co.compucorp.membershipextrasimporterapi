@@ -269,6 +269,17 @@ class CRM_Membershipextrasimporterapi_EntityImporter_MembershipTest extends Base
     $this->assertEquals('2030-01-01', $newMembership['status_override_end_date']);
   }
 
+  public function testImportWithOverrideUntilDateButWithNoEndDateForTheStatusThrowException() {
+    $this->sampleRowData['membership_external_id'] = 'test19';
+    $this->sampleRowData['membership_is_status_overridden'] = CRM_Member_StatusOverrideTypes::UNTIL_DATE;
+
+    $this->expectException(CRM_Membershipextrasimporterapi_Exception_InvalidMembershipFieldException::class);
+    $this->expectExceptionCode(500);
+
+    $membershipImporter = new MembershipImporter($this->sampleRowData, $this->contactId, $this->recurContributionId);
+    $membershipImporter->import();
+  }
+
   private function getMembershipsByContactId($contactId) {
     $membershipIds = NULL;
 

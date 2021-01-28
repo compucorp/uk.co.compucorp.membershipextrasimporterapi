@@ -139,6 +139,13 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Membership {
   }
 
   private function isOverriddenStatus($statusOverrideEndDate) {
+    if (!empty($this->rowData['membership_is_status_overridden']) &&
+      $this->rowData['membership_is_status_overridden'] == CRM_Member_StatusOverrideTypes::UNTIL_DATE &&
+      empty($statusOverrideEndDate)) {
+      throw new CRM_Membershipextrasimporterapi_Exception_InvalidMembershipFieldException("Membership status override end date should be provided if the membership is 'Override Until Date'.", 500);
+    }
+
+
     if (!empty($statusOverrideEndDate)) {
       return CRM_Member_StatusOverrideTypes::UNTIL_DATE;
     }
