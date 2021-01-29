@@ -36,6 +36,31 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItemTest extends BaseHe
 
     $membershipParams = ['contact_id' => $this->contactId, 'membership_type_id' => 'Student'];
     $this->membershipId = MembershipFabricator::fabricate($membershipParams)['id'];
+
+    $this->createTestFinancialTypeWithTax();
+  }
+
+  private function createTestFinancialTypeWithTax() {
+    $financialTypeId = civicrm_api3('FinancialType', 'create', [
+      'sequential' => 1,
+      'name' => 'FT Taxed',
+      'is_active' => 1,
+    ])['id'];
+
+    civicrm_api3('FinancialAccount', 'create', [
+      'name' => 'VAT',
+      'financial_account_type_id' => 'Liability',
+      'is_tax' => 1,
+      'tax_rate' => 10,
+      'is_active' => 1,
+    ]);
+
+    civicrm_api3('EntityFinancialAccount', 'create', [
+      'account_relationship' => 'Sales Tax Account is',
+      'entity_table' => 'civicrm_financial_type',
+      'entity_id' => $financialTypeId,
+      'financial_account_id' => 'VAT',
+    ]);
   }
 
   public function testImportNewDonationLineItem() {
@@ -293,7 +318,88 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItemTest extends BaseHe
 
     $contribution = $this->getContributionById($this->contributionId);
 
-    $this->assertEquals($contribution['total_amount'], 80.5);
+    $this->assertEquals(80.5, $contribution['total_amount']);
+  }
+
+  public function testImportWithTaxWillUpdateContributionAmountToTheSumOfLineItemsAmountsAndTaxes() {
+    $this->sampleRowData['line_item_unit_price'] = 50;
+    $this->sampleRowData['line_item_tax_amount'] = 10;
+    $this->sampleRowData['line_item_financial_type'] = 'FT Taxed';
+
+    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId);
+    $lineItemImporter->import();
+
+    $secondLineItemParams = [
+      'line_item_entity_table' => 'civicrm_contribution',
+      'line_item_unit_price' => 30.5,
+      'line_item_tax_amount' => 5.33,
+      'line_item_financial_type' => 'FT Taxed',
+    ];
+    $lineItemImporter = new LineItemImporter($secondLineItemParams, $this->contributionId, $this->membershipId);
+    $lineItemImporter->import();
+
+    $contribution = $this->getContributionById($this->contributionId);
+
+    $this->assertEquals(95.83, $contribution['total_amount']);
+  }
+
+  public function testImportWithTaxWillUpdateContributionTaxAmountToTheSumOfLineItemsTaxAmounts() {
+    $this->sampleRowData['line_item_unit_price'] = 50;
+    $this->sampleRowData['line_item_tax_amount'] = 10;
+    $this->sampleRowData['line_item_financial_type'] = 'FT Taxed';
+
+    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId);
+    $lineItemImporter->import();
+
+    $secondLineItemParams = [
+      'line_item_entity_table' => 'civicrm_contribution',
+      'line_item_unit_price' => 30.5,
+      'line_item_tax_amount' => 5.33,
+      'line_item_financial_type' => 'FT Taxed',
+    ];
+    $lineItemImporter = new LineItemImporter($secondLineItemParams, $this->contributionId, $this->membershipId);
+    $lineItemImporter->import();
+
+    $contribution = $this->getContributionById($this->contributionId);
+
+    $this->assertEquals(15.33, $contribution['tax_amount']);
+  }
+
+  public function testImportWithTaxWillSetLineItemAmountAndTaxAmountCorrectly() {
+    $this->sampleRowData['line_item_unit_price'] = 50;
+    $this->sampleRowData['line_item_tax_amount'] = 10;
+    $this->sampleRowData['line_item_financial_type'] = 'FT Taxed';
+
+    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId);
+    $lineItemId = $lineItemImporter->import();
+
+    $lineItem = $this->getLineItemById($lineItemId);
+
+    $this->assertEquals(50, $lineItem['line_total']);
+    $this->assertEquals(10, $lineItem['tax_amount']);
+  }
+
+  public function testImportWithTaxWillCreateCorrectFinancialItemRecords() {
+    $this->sampleRowData['line_item_unit_price'] = 50;
+    $this->sampleRowData['line_item_tax_amount'] = 10;
+    $this->sampleRowData['line_item_financial_type'] = 'FT Taxed';
+
+    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId);
+    $newLineItemId = $lineItemImporter->import();
+
+    $newLineItem = $this->getLineItemById($newLineItemId);
+
+    $sqlQuery = "SELECT cfi.contact_id, cfi.description, cfi.amount, cfi.financial_account_id, cfi.entity_table, cfi.entity_id  
+                 FROM civicrm_financial_item cfi
+                 INNER JOIN civicrm_entity_financial_trxn ceft ON ceft.entity_id = cfi.id 
+                 WHERE ceft.entity_table = 'civicrm_financial_item' AND cfi.entity_id = {$newLineItemId} AND cfi.entity_table = 'civicrm_line_item'";
+    $result = CRM_Core_DAO::executeQuery($sqlQuery);
+
+    $result->fetch();
+    $this->assertEquals($newLineItem['line_total'], $result->amount);
+
+    $result->fetch();
+    $this->assertEquals($newLineItem['tax_amount'], $result->amount);
   }
 
   private function getLineItemsByContributionId($contributionId) {

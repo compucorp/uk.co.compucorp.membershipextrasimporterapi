@@ -209,7 +209,7 @@ function _civicrm_api3_membershipextras_importer_create_spec(&$params) {
 
   $params['line_item_tax_amount'] = [
     'title' => 'Order Line Tax Amount',
-    'type' => CRM_Utils_Type::T_STRING,
+    'type' => CRM_Utils_Type::T_MONEY,
   ];
 
   $params['line_item_auto_renew'] = [

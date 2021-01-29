@@ -79,20 +79,24 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItem {
     }
 
     $sqlParams = $this->prepareSqlParams();
-    $sql = "INSERT INTO `civicrm_line_item` (`entity_table` , `entity_id` , `contribution_id` , `price_field_id` , `price_field_value_id`,
-            `label` , `qty` , `unit_price` , `line_total` , `financial_type_id`) 
-             VALUES (%1, %2, %3, %4, %5, %6, %7, %8, %9, %10)";
-    CRM_Core_DAO::executeQuery($sql, $sqlParams);
+    $sqlQuery = $this->prepareSqlQuery($sqlParams);
+    CRM_Core_DAO::executeQuery($sqlQuery, $sqlParams);
 
     $dao = CRM_Core_DAO::executeQuery('SELECT LAST_INSERT_ID() as line_item_id');
     $dao->fetch();
     $lineItemId = $dao->line_item_id;
 
     $mappedLineItemParams = $this->mapLineItemSQLParamsToNames($sqlParams);
+
     $financialItemId = $this->createFinancialItemRecord($lineItemId, $mappedLineItemParams);
     $this->createEntityFinancialTransactionRecord($financialItemId, $mappedLineItemParams['line_total']);
 
-    $this->updateRelatedContributionAmount($mappedLineItemParams['line_total']);
+    if (!empty($mappedLineItemParams['tax_amount'])) {
+      $taxFinancialItemId = $this->createTaxFinancialItemRecord($lineItemId, $mappedLineItemParams);
+      $this->createTaxEntityFinancialTransactionRecord($taxFinancialItemId, $mappedLineItemParams['tax_amount']);
+    }
+
+    $this->updateRelatedContributionAmount($mappedLineItemParams['line_total'], $mappedLineItemParams['tax_amount']);
 
     return $lineItemId;
   }
@@ -124,6 +128,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItem {
     $unitPrice = $this->getUnitPrice();
     $lineTotal = $this->getLineTotal($unitPrice, $quantity);
     $financialTypeId = $this->getFinancialTypeId();
+    $taxAmount = $this->getTaxAmount();
 
     return [
       1 => [$this->entityTable, 'String'],
@@ -136,10 +141,13 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItem {
       8 => [$unitPrice, 'Money'],
       9 => [$lineTotal, 'Money'],
       10 => [$financialTypeId, 'Integer'],
+      11 => [$taxAmount, 'Money'],
     ];
   }
 
   private function mapLineItemSQLParamsToNames($contributionSqlParams) {
+    $taxAmount= empty($contributionSqlParams[11][0]) ? 0 : $contributionSqlParams[11][0];
+
     return [
       'entity_table' => $contributionSqlParams[1][0],
       'entity_id' => $contributionSqlParams[2][0],
@@ -151,7 +159,24 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItem {
       'unit_price' => $contributionSqlParams[8][0],
       'line_total' => $contributionSqlParams[9][0],
       'financial_type_id' => $contributionSqlParams[10][0],
+      'tax_amount' => $taxAmount,
     ];
+  }
+
+  private function prepareSqlQuery($sqlParams) {
+    $columnsToInsert = '`entity_table` , `entity_id` , `contribution_id` , `price_field_id` , `price_field_value_id`,
+            `label` , `qty` , `unit_price` , `line_total` , `financial_type_id`';
+
+    $columnsValuesIndexes = '%1, %2, %3, %4, %5, %6, %7, %8, %9, %10';
+
+    $isThereTax = !empty($sqlParams[11][0]);
+    if ($isThereTax) {
+      $columnsToInsert .= ', `tax_amount`';
+      $columnsValuesIndexes .= ', %11';
+    }
+
+    return "INSERT INTO `civicrm_line_item` ({$columnsToInsert})
+             VALUES ({$columnsValuesIndexes})";
   }
 
   private function setPriceFieldValueDetails() {
@@ -230,13 +255,25 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItem {
     throw new CRM_Membershipextrasimporterapi_Exception_InvalidLineItemException('Invalid line item "Financial Type"', 200);
   }
 
+  private function getTaxAmount() {
+    if (!empty($this->rowData['line_item_tax_amount'])) {
+      return $this->rowData['line_item_tax_amount'];
+    }
+
+    return 0;
+  }
+
   private function createFinancialItemRecord($lineItemId, $mappedLineItemParams) {
+    // This is reserved value for income account relationship and will always equal such value on any CiviCRM site
+    $incomeAccountRelationshipId = 1;
+    $toFinancialAccountId = $this->getFinancialAccountIdByRelationship($mappedLineItemParams['financial_type_id'], $incomeAccountRelationshipId);
+
     $sqlParams = [
       1 => [$this->contribution['contact_id'], 'Integer'],
       2 => [$mappedLineItemParams['line_item_label'], 'String'],
       3 => [$mappedLineItemParams['line_total'], 'Money'],
       4 => [$this->contribution['currency'], 'String'],
-      5 => [$this->getToFinancialAccountId($mappedLineItemParams['financial_type_id']), 'Integer'],
+      5 => [$toFinancialAccountId, 'Integer'],
       6 => [$this->getFinancialItemStatusId(), 'Integer'],
       7 => ['civicrm_line_item', 'String'],
       8 => [$lineItemId, 'Integer'],
@@ -253,12 +290,36 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItem {
     return $dao->id;
   }
 
-  private function getToFinancialAccountId($financialTypeId) {
-    // This is reserved value and will always equal such value on any CiviCRM site
-    $incomeAccountRelationshipId = 1;
+  private function createTaxFinancialItemRecord($lineItemId, $mappedLineItemParams) {
+    // This is reserved value for sales account relationship and will always equal such value on any CiviCRM site
+    $salesTaxAccountRelationshipId = 10;
+    $toFinancialAccountId = $this->getFinancialAccountIdByRelationship($mappedLineItemParams['financial_type_id'], $salesTaxAccountRelationshipId);
 
+    $sqlParams = [
+      1 => [$this->contribution['contact_id'], 'Integer'],
+      2 => ['Sales Tax', 'String'],
+      3 => [$mappedLineItemParams['tax_amount'], 'Money'],
+      4 => [$this->contribution['currency'], 'String'],
+      5 => [$toFinancialAccountId, 'Integer'],
+      6 => [$this->getFinancialItemStatusId(), 'Integer'],
+      7 => ['civicrm_line_item', 'String'],
+      8 => [$lineItemId, 'Integer'],
+      9 => [$this->contribution['receive_date'], 'String'],
+    ];
+    $sqlQuery = "INSERT INTO `civicrm_financial_item` (`contact_id` , `description` , `amount` , `currency` ,
+                 `financial_account_id` , `status_id` , `entity_table` , `entity_id`, `transaction_date`) 
+                 VALUES (%1, %2, %3, %4, %5, %6, %7, %8, %9)";
+    CRM_Core_DAO::executeQuery($sqlQuery, $sqlParams);
+
+    $dao = CRM_Core_DAO::executeQuery('SELECT LAST_INSERT_ID() as id');
+    $dao->fetch();
+
+    return $dao->id;
+  }
+
+  private function getFinancialAccountIdByRelationship($financialTypeId, $accountRelationship) {
     $sqlQuery = "SELECT financial_account_id FROM civicrm_entity_financial_account 
-                   WHERE entity_table = 'civicrm_financial_type' AND entity_id = {$financialTypeId} AND account_relationship = {$incomeAccountRelationshipId}";
+                   WHERE entity_table = 'civicrm_financial_type' AND entity_id = {$financialTypeId} AND account_relationship = {$accountRelationship}";
     $result = CRM_Core_DAO::executeQuery($sqlQuery);
     $result->fetch();
 
@@ -308,16 +369,44 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItem {
     CRM_Core_DAO::executeQuery($sqlQuery, $sqlParams);
   }
 
+  private function createTaxEntityFinancialTransactionRecord($financialItemId, $taxAmount) {
+    $sqlParams = [
+      1 => ['civicrm_financial_item', 'String'],
+      2 => [$financialItemId, 'Integer'],
+      3 => [$this->getContributionFinancialTrxnId(), 'Integer'],
+      4 => [$taxAmount, 'Money'],
+    ];
+    $sqlQuery = "INSERT INTO `civicrm_entity_financial_trxn` (`entity_table` , `entity_id` , `financial_trxn_id` , `amount`) 
+                 VALUES (%1, %2, %3, %4)";
+    CRM_Core_DAO::executeQuery($sqlQuery, $sqlParams);
+  }
+
   private function getContributionFinancialTrxnId() {
+    if (!empty($this->cachedValues['contribution_financial_trxn_Id'])) {
+      return $this->cachedValues['contribution_financial_trxn_Id'];
+    }
+
     $dao = CRM_Core_DAO::executeQuery("SELECT financial_trxn_id FROM civicrm_entity_financial_trxn WHERE entity_table = 'civicrm_contribution' AND entity_id = {$this->contributionId} LIMIT 1");
     $dao->fetch();
+
+    $this->cachedValues['contribution_financial_trxn_Id'] = $dao->financial_trxn_id;
 
     return $dao->financial_trxn_id;
   }
 
-  private function updateRelatedContributionAmount($lineItemTotalAmount) {
-    $sqlQuery = "UPDATE `civicrm_contribution` SET `total_amount` = (`total_amount` + %1)";
-    CRM_Core_DAO::executeQuery($sqlQuery, [1 => [$lineItemTotalAmount, 'Money']]);
+  private function updateRelatedContributionAmount($lineItemTotalAmount, $taxAmount) {
+    $totalAmount = $lineItemTotalAmount + $taxAmount;
+
+    $amountFieldOperation = '`total_amount` = `total_amount` + %1';
+    $sqlParams[1] = [$totalAmount, 'Money'];
+
+    if (!empty($taxAmount)) {
+      $amountFieldOperation .= ', `tax_amount` = IFNULL(`tax_amount`, 0) + %2';
+      $sqlParams[2] = [$taxAmount, 'Money'];
+    }
+
+    $sqlQuery = "UPDATE `civicrm_contribution` SET {$amountFieldOperation} WHERE id = {$this->contributionId}";
+    CRM_Core_DAO::executeQuery($sqlQuery, $sqlParams);
   }
 
 }
