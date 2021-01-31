@@ -475,11 +475,31 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContributionTest exten
 
   public function testImportDirectDebitPaymentPlanWithPaymentProcessorThatIsNotDirectDebitThrowException() {
     $this->sampleRowData['payment_plan_external_id'] = 'test35';
-    $this->sampleRowData['payment_plan_payment_processor'] = 'Paypal';
+    $this->sampleRowData['payment_plan_payment_processor'] = 'Offline Recurring Contribution';
     $this->sampleRowData['payment_plan_payment_method'] = 'direct_debit';
 
     $this->expectException(CRM_Membershipextrasimporterapi_Exception_InvalidRecurContributionFieldException::class);
     $this->expectExceptionCode(1100);
+
+    $recurContributionImporter = new RecurContributionImporter($this->sampleRowData, $this->contactId);
+    $recurContributionImporter->import();
+  }
+
+  public function testImportWithNonManualPaymentProcessorThrowException() {
+    civicrm_api3('PaymentProcessor', 'create', [
+      'payment_processor_type_id' => 'Dummy',
+      'financial_account_id' => 'Payment Processor Account',
+      'name' => 'Test Processor',
+      'is_active' => 1,
+      'is_test' => 0,
+      'class_name' => 'Payment_Dummy',
+    ]);
+
+    $this->sampleRowData['payment_plan_external_id'] = 'test36';
+    $this->sampleRowData['payment_plan_payment_processor'] = 'Test Processor';
+
+    $this->expectException(CRM_Membershipextrasimporterapi_Exception_InvalidRecurContributionFieldException::class);
+    $this->expectExceptionCode(1200);
 
     $recurContributionImporter = new RecurContributionImporter($this->sampleRowData, $this->contactId);
     $recurContributionImporter->import();

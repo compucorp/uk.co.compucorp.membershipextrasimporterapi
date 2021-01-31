@@ -185,15 +185,20 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContribution {
 
   private function getPaymentProcessorId() {
     if (!isset($this->cachedValues['payment_processors'])) {
-      $sqlQuery = "SELECT id, name FROM civicrm_payment_processor WHERE is_test = 0";
+      $sqlQuery = "SELECT id, name, class_name FROM civicrm_payment_processor WHERE is_test = 0 AND is_active = 1";
       $result = CRM_Core_DAO::executeQuery($sqlQuery);
       while ($result->fetch()) {
-        $this->cachedValues['payment_processors'][$result->name] = $result->id;
+        $this->cachedValues['payment_processors'][$result->name] = ['id' => $result->id, 'class_name' => $result->class_name];
       }
     }
 
-    if (!empty($this->cachedValues['payment_processors'][$this->rowData['payment_plan_payment_processor']])) {
-      return $this->cachedValues['payment_processors'][$this->rowData['payment_plan_payment_processor']];
+    $paymentProcessorName = $this->rowData['payment_plan_payment_processor'];
+    if (!empty($this->cachedValues['payment_processors'][$paymentProcessorName])) {
+      if ($this->cachedValues['payment_processors'][$paymentProcessorName]['class_name'] != 'Payment_Manual') {
+        throw new CRM_Membershipextrasimporterapi_Exception_InvalidRecurContributionFieldException('Only Manual payment plan "Payment Processors"', 1200);
+      }
+
+      return $this->cachedValues['payment_processors'][$paymentProcessorName]['id'];
     }
 
     throw new CRM_Membershipextrasimporterapi_Exception_InvalidRecurContributionFieldException('Invalid payment plan "Payment Processor"', 300);
