@@ -27,7 +27,11 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItem {
     $this->contributionId = $contributionId;
     $this->membershipId = $membershipId;
     $this->setContribution($contributionId);
-    $this->setMembership($membershipId);
+
+    if ($membershipId != NULL) {
+      $this->setMembership($membershipId);
+    }
+
     $this->setEntityTable();
     $this->setEntityId();
   }
@@ -73,11 +77,6 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItem {
   }
 
   public function import() {
-    $lineItemId = $this->getLineItemIfExist();
-    if ($lineItemId) {
-      return $lineItemId;
-    }
-
     $sqlParams = $this->prepareSqlParams();
     $sqlQuery = $this->prepareSqlQuery($sqlParams);
     CRM_Core_DAO::executeQuery($sqlQuery, $sqlParams);
@@ -99,24 +98,6 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItem {
     $this->updateRelatedContributionAmount($mappedLineItemParams['line_total'], $mappedLineItemParams['tax_amount']);
 
     return $lineItemId;
-  }
-
-  private function getLineItemIfExist() {
-    // todo : What if we have more than one "donation" line item (we probably need to match using price fields)
-    $query = "SELECT id FROM civicrm_line_item WHERE entity_table = %1 AND entity_id = %2 AND contribution_id = %3";
-    $sqlParams = [
-      1 => [$this->entityTable, 'String'],
-      2 => [$this->entityId, 'Integer'],
-      3 => [$this->contributionId, 'Integer'],
-    ];
-    $lineItemId = CRM_Core_DAO::executeQuery($query, $sqlParams);
-    $lineItemId->fetch();
-
-    if (!empty($lineItemId->id)) {
-      return $lineItemId->id;
-    }
-
-    return NULL;
   }
 
   private function prepareSqlParams() {

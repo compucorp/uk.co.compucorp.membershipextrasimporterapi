@@ -28,8 +28,10 @@ class CRM_Membershipextrasimporterapi_CSVRowImporter {
     $contributionImporter = new ContributionImporter($this->rowData, $this->contactId, $recurContributionId);
     $contributionId = $contributionImporter->import();
 
-    $membershipPaymentCreator = new MembershipPaymentCreator($membershipId, $contributionId);
-    $membershipPaymentCreator->create();
+    if ($membershipId == NULL) {
+      $membershipPaymentCreator = new MembershipPaymentCreator($membershipId, $contributionId);
+      $membershipPaymentCreator->create();
+    }
 
     $lineItemImporter = new LineItemImporter($this->rowData, $contributionId, $membershipId);
     $lineItemImporter->import();

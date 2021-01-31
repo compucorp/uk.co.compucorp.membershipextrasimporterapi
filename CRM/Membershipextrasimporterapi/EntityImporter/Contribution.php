@@ -17,10 +17,6 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Contribution {
   }
 
   public function import() {
-    if (empty($this->rowData['contribution_external_id'])) {
-      return NULL;
-    }
-
     $contributionId = $this->getContributionIdIfExist();
     if ($contributionId) {
       return $contributionId;
