@@ -12,6 +12,7 @@ use CRM_MembershipExtras_Test_Fabricator_MembershipType as MembershipTypeFabrica
 class CRM_Membershipextrasimporterapi_EntityImporter_MembershipTest extends BaseHeadlessTest {
 
   private $sampleRowData = [
+    'line_item_entity_table' => 'civicrm_membership',
     'membership_external_id' => 'test1',
     'membership_type' => 'Student',
     'membership_join_date' => '20180101000000',
@@ -275,6 +276,26 @@ class CRM_Membershipextrasimporterapi_EntityImporter_MembershipTest extends Base
 
     $this->expectException(CRM_Membershipextrasimporterapi_Exception_InvalidMembershipFieldException::class);
     $this->expectExceptionCode(500);
+
+    $membershipImporter = new MembershipImporter($this->sampleRowData, $this->contactId, $this->recurContributionId);
+    $membershipImporter->import();
+  }
+
+  public function testImportForNonMembershipLineItemWillNotCreateMembership() {
+    $this->sampleRowData['payment_plan_external_id'] = 'test20';
+    $this->sampleRowData['line_item_entity_table'] = 'civicrm_contribution';
+
+    $membershipImporter = new MembershipImporter($this->sampleRowData, $this->contactId, $this->recurContributionId);
+    $membershipId = $membershipImporter->import();
+
+    $this->assertNull($membershipId);
+  }
+
+  public function testImportWithNoExternalIdThrowException() {
+    unset($this->sampleRowData['membership_external_id']);
+
+    $this->expectException(CRM_Membershipextrasimporterapi_Exception_InvalidMembershipFieldException::class);
+    $this->expectExceptionCode(600);
 
     $membershipImporter = new MembershipImporter($this->sampleRowData, $this->contactId, $this->recurContributionId);
     $membershipImporter->import();

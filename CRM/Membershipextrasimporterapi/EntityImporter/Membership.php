@@ -17,10 +17,15 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Membership {
   }
 
   public function import() {
-    if (empty($this->rowData['membership_external_id'])) {
-      // todo : when the line item importer is created,
-      // we need to throw an exception if this field  is not set and line_item.entity_table = "civicrm_membership"
+    $membershipExternalIdSet = !empty($this->rowData['membership_external_id']);
+    $isMembershipLineItem = $this->rowData['line_item_entity_table'] == 'civicrm_membership';
+
+    if (!$isMembershipLineItem) {
       return NULL;
+    }
+
+    if (!$membershipExternalIdSet) {
+      throw new CRM_Membershipextrasimporterapi_Exception_InvalidMembershipFieldException('Membership external id is required for membership line items', 600);
     }
 
     $membershipId = $this->getMembershipIdIfExist();
