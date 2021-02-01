@@ -150,7 +150,6 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Membership {
       throw new CRM_Membershipextrasimporterapi_Exception_InvalidMembershipFieldException("Membership status override end date should be provided if the membership is 'Override Until Date'.", 500);
     }
 
-
     if (!empty($statusOverrideEndDate)) {
       return CRM_Member_StatusOverrideTypes::UNTIL_DATE;
     }

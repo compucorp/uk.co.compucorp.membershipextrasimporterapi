@@ -21,7 +21,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContributionTest exten
     'payment_plan_financial_type' => 'Member Dues',
     'payment_plan_payment_method' => 'EFT',
     'payment_plan_status' => 'Pending',
-    'payment_plan_currency'=> 'USD',
+    'payment_plan_currency' => 'USD',
   ];
 
   private $contactId;

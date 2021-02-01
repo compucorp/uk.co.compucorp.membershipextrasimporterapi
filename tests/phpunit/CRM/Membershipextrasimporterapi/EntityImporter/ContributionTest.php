@@ -16,7 +16,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_ContributionTest extends Ba
     'contribution_payment_method' => 'EFT',
     'contribution_received_date' => '20190101013040',
     'contribution_status' => 'Pending',
-    'contribution_currency'=> 'USD',
+    'contribution_currency' => 'USD',
   ];
 
   private $contactId;

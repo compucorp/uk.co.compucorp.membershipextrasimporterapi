@@ -127,7 +127,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItem {
   }
 
   private function mapLineItemSQLParamsToNames($contributionSqlParams) {
-    $taxAmount= empty($contributionSqlParams[11][0]) ? 0 : $contributionSqlParams[11][0];
+    $taxAmount = empty($contributionSqlParams[11][0]) ? 0 : $contributionSqlParams[11][0];
 
     return [
       'entity_table' => $contributionSqlParams[1][0],
