@@ -107,16 +107,6 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItemTest extends BaseHe
     $lineItemImporter->import();
   }
 
-  public function testImportExistingLineItemWillNotCreateNewOne() {
-    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId);
-    $firstLineItemId = $lineItemImporter->import();
-
-    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId);
-    $secondLineItemId = $lineItemImporter->import();
-
-    $this->assertEquals($firstLineItemId, $secondLineItemId);
-  }
-
   public function testImportMembershipLineItemWithEntityIdNotSetWillDefaultItToMembershipId() {
     $this->sampleRowData['line_item_entity_table'] = 'civicrm_membership';
 
