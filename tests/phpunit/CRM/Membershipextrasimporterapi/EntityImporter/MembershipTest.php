@@ -282,7 +282,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_MembershipTest extends Base
   }
 
   public function testImportForNonMembershipLineItemWillNotCreateMembership() {
-    $this->sampleRowData['payment_plan_external_id'] = 'test20';
+    $this->sampleRowData['membership_external_id'] = 'test20';
     $this->sampleRowData['line_item_entity_table'] = 'civicrm_contribution';
 
     $membershipImporter = new MembershipImporter($this->sampleRowData, $this->contactId, $this->recurContributionId);
@@ -299,6 +299,15 @@ class CRM_Membershipextrasimporterapi_EntityImporter_MembershipTest extends Base
 
     $membershipImporter = new MembershipImporter($this->sampleRowData, $this->contactId, $this->recurContributionId);
     $membershipImporter->import();
+  }
+
+  public function testImportWithLineItemEntityIdSetWillReturnItInsteadOfCreatingMembership() {
+    $this->sampleRowData['line_item_entity_id'] = 5580;
+
+    $membershipImporter = new MembershipImporter($this->sampleRowData, $this->contactId, $this->recurContributionId);
+    $membershipId = $membershipImporter->import();
+
+    $this->assertEquals($this->sampleRowData['line_item_entity_id'], $membershipId);
   }
 
   private function getMembershipsByContactId($contactId) {

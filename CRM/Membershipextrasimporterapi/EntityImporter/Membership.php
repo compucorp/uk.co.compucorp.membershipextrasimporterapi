@@ -17,13 +17,18 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Membership {
   }
 
   public function import() {
-    $membershipExternalIdSet = !empty($this->rowData['membership_external_id']);
     $isMembershipLineItem = $this->rowData['line_item_entity_table'] == 'civicrm_membership';
-
     if (!$isMembershipLineItem) {
       return NULL;
     }
 
+    // If the membership id is supplied in the CSV as part of the line item entity_id
+    // then we just return it
+    if (!empty($this->rowData['line_item_entity_id'])) {
+      return $this->rowData['line_item_entity_id'];
+    }
+
+    $membershipExternalIdSet = !empty($this->rowData['membership_external_id']);
     if (!$membershipExternalIdSet) {
       throw new CRM_Membershipextrasimporterapi_Exception_InvalidMembershipFieldException('Membership external id is required for membership line items', 600);
     }
