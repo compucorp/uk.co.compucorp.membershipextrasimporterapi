@@ -95,7 +95,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItem {
       $this->createTaxEntityFinancialTransactionRecord($taxFinancialItemId, $mappedLineItemParams['tax_amount']);
     }
 
-    $this->updateRelatedContributionAmount($mappedLineItemParams['line_total'], $mappedLineItemParams['tax_amount']);
+    $this->updateRelatedContributionAmounts($mappedLineItemParams['line_total'], $mappedLineItemParams['tax_amount']);
 
     return $lineItemId;
   }
@@ -375,7 +375,25 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItem {
     return $dao->financial_trxn_id;
   }
 
-  private function updateRelatedContributionAmount($lineItemTotalAmount, $taxAmount) {
+  /**
+   * Updates the contribution amounts.
+   *
+   * Here we update both the contribution
+   * total amount and tax amount, the mechanism
+   * to do so is by keeping adding the line
+   * item amounts we currently processing
+   * to the related contribution amounts ,
+   * since line items are processed row by row and
+   * there is no way to know the total amount in advance.
+   *
+   * Hence that the total amount is both the
+   * the amount + the tax amount same as in
+   * CiviCRM core.
+   *
+   * @param float $lineItemTotalAmount
+   * @param float $taxAmount
+   */
+  private function updateRelatedContributionAmounts($lineItemTotalAmount, $taxAmount) {
     $totalAmount = $lineItemTotalAmount + $taxAmount;
 
     $amountFieldOperation = '`total_amount` = `total_amount` + %1';

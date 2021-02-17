@@ -183,6 +183,18 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContribution {
     throw new CRM_Membershipextrasimporterapi_Exception_InvalidRecurContributionFieldException('Invalid payment plan "Status"', 200);
   }
 
+  /**
+   * Returns the payment processor id.
+   * Hence that only payment processors
+   * that implements Payment_Manual class
+   * are allowed, since the importer will
+   * only be used with offline payment
+   * processors.
+   *
+   * @return mixed
+   *
+   * @throws CRM_Membershipextrasimporterapi_Exception_InvalidRecurContributionFieldException
+   */
   private function getPaymentProcessorId() {
     if (!isset($this->cachedValues['payment_processors'])) {
       $sqlQuery = "SELECT id, name, class_name FROM civicrm_payment_processor WHERE is_test = 0 AND is_active = 1";
@@ -194,7 +206,8 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContribution {
 
     $paymentProcessorName = $this->rowData['payment_plan_payment_processor'];
     if (!empty($this->cachedValues['payment_processors'][$paymentProcessorName])) {
-      if ($this->cachedValues['payment_processors'][$paymentProcessorName]['class_name'] != 'Payment_Manual') {
+      $offlinePaymentProcessorClassName = 'Payment_Manual';
+      if ($this->cachedValues['payment_processors'][$paymentProcessorName]['class_name'] != $offlinePaymentProcessorClassName) {
         throw new CRM_Membershipextrasimporterapi_Exception_InvalidRecurContributionFieldException('Only Manual payment plan "Payment Processors"', 1200);
       }
 
