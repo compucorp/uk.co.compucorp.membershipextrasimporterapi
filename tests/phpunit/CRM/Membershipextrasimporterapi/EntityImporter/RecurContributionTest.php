@@ -21,6 +21,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContributionTest exten
     'payment_plan_financial_type' => 'Member Dues',
     'payment_plan_payment_method' => 'EFT',
     'payment_plan_status' => 'Pending',
+    'payment_plan_currency' => 'USD',
   ];
 
   private $contactId;
@@ -401,6 +402,104 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContributionTest exten
 
     $this->expectException(CRM_Membershipextrasimporterapi_Exception_InvalidRecurContributionFieldException::class);
     $this->expectExceptionCode(800);
+
+    $recurContributionImporter = new RecurContributionImporter($this->sampleRowData, $this->contactId);
+    $recurContributionImporter->import();
+  }
+
+  public function testImportWithInvalidCurrencyThrowAnException() {
+    $this->sampleRowData['payment_plan_external_id'] = 'test31';
+    $this->sampleRowData['payment_plan_currency'] = 'FAKE';
+
+    $this->expectException(CRM_Membershipextrasimporterapi_Exception_InvalidRecurContributionFieldException::class);
+    $this->expectExceptionCode(900);
+
+    $recurContributionImporter = new RecurContributionImporter($this->sampleRowData, $this->contactId);
+    $recurContributionImporter->import();
+  }
+
+  public function testImportWithInactiveCurrencyWillThrowAnException() {
+    $this->sampleRowData['payment_plan_external_id'] = 'test32';
+    $this->sampleRowData['payment_plan_currency'] = 'JOD';
+
+    $this->expectException(CRM_Membershipextrasimporterapi_Exception_InvalidRecurContributionFieldException::class);
+    $this->expectExceptionCode(900);
+
+    $recurContributionImporter = new RecurContributionImporter($this->sampleRowData, $this->contactId);
+    $recurContributionImporter->import();
+  }
+
+  public function testImportSetsCorrectCurrencyValue() {
+    $this->sampleRowData['payment_plan_external_id'] = 'test33';
+    $this->sampleRowData['payment_plan_currency'] = 'USD';
+
+    $recurContributionImporter = new RecurContributionImporter($this->sampleRowData, $this->contactId);
+    $newRecurContributionId = $recurContributionImporter->import();
+
+    $newRecurContribution = $this->getRecurContributionsById($newRecurContributionId);
+
+    $this->assertEquals($this->sampleRowData['payment_plan_currency'], $newRecurContribution['currency']);
+  }
+
+  public function testImportDirectDebitPaymentPlanShouldHaveBothPaymentProcessorAndPaymentMethodAsDirectDebit() {
+    $this->sampleRowData['payment_plan_external_id'] = 'test34';
+    $this->sampleRowData['payment_plan_payment_processor'] = 'Direct Debit';
+    $this->sampleRowData['payment_plan_payment_method'] = 'direct_debit';
+
+    $beforeImportIds = $this->getRecurContributionsByContactId($this->contactId);
+
+    $recurContributionImporter = new RecurContributionImporter($this->sampleRowData, $this->contactId);
+    $newRecurContributionId = $recurContributionImporter->import();
+
+    $afterImportIds = $this->getRecurContributionsByContactId($this->contactId);
+
+    $importSucceed = FALSE;
+    if (empty($beforeImportIds) && $afterImportIds[0] == $newRecurContributionId) {
+      $importSucceed = TRUE;
+    }
+
+    $this->assertTrue($importSucceed);
+  }
+
+  public function testImportDirectDebitPaymentPlanWithPaymentMethodThatIsNotDirectDebitThrowException() {
+    $this->sampleRowData['payment_plan_external_id'] = 'test35';
+    $this->sampleRowData['payment_plan_payment_processor'] = 'Direct Debit';
+    $this->sampleRowData['payment_plan_payment_method'] = 'EFT';
+
+    $this->expectException(CRM_Membershipextrasimporterapi_Exception_InvalidRecurContributionFieldException::class);
+    $this->expectExceptionCode(1000);
+
+    $recurContributionImporter = new RecurContributionImporter($this->sampleRowData, $this->contactId);
+    $recurContributionImporter->import();
+  }
+
+  public function testImportDirectDebitPaymentPlanWithPaymentProcessorThatIsNotDirectDebitThrowException() {
+    $this->sampleRowData['payment_plan_external_id'] = 'test35';
+    $this->sampleRowData['payment_plan_payment_processor'] = 'Offline Recurring Contribution';
+    $this->sampleRowData['payment_plan_payment_method'] = 'direct_debit';
+
+    $this->expectException(CRM_Membershipextrasimporterapi_Exception_InvalidRecurContributionFieldException::class);
+    $this->expectExceptionCode(1100);
+
+    $recurContributionImporter = new RecurContributionImporter($this->sampleRowData, $this->contactId);
+    $recurContributionImporter->import();
+  }
+
+  public function testImportWithNonManualPaymentProcessorThrowException() {
+    civicrm_api3('PaymentProcessor', 'create', [
+      'payment_processor_type_id' => 'Dummy',
+      'financial_account_id' => 'Payment Processor Account',
+      'name' => 'Test Processor',
+      'is_active' => 1,
+      'is_test' => 0,
+      'class_name' => 'Payment_Dummy',
+    ]);
+
+    $this->sampleRowData['payment_plan_external_id'] = 'test36';
+    $this->sampleRowData['payment_plan_payment_processor'] = 'Test Processor';
+
+    $this->expectException(CRM_Membershipextrasimporterapi_Exception_InvalidRecurContributionFieldException::class);
+    $this->expectExceptionCode(1200);
 
     $recurContributionImporter = new RecurContributionImporter($this->sampleRowData, $this->contactId);
     $recurContributionImporter->import();

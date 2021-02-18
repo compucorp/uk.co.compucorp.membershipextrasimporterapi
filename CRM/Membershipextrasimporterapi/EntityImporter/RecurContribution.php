@@ -24,6 +24,8 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContribution {
       return $recurContributionId;
     }
 
+    $this->validateIfDirectDebitPaymentPlan();
+
     $sqlParams = $this->prepareSqlParams();
     $sqlQuery = "INSERT INTO `civicrm_contribution_recur` (`contact_id` , `amount` , `currency` , `frequency_unit` , `frequency_interval` , `installments` ,
             `start_date`, `contribution_status_id`, `payment_processor_id` , `financial_type_id` , `payment_instrument_id`, `auto_renew`, `create_date`,
@@ -52,6 +54,18 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContribution {
     }
 
     return NULL;
+  }
+
+  private function validateIfDirectDebitPaymentPlan() {
+    $isPaymentProcessorDirectDebit = ($this->rowData['payment_plan_payment_processor'] == 'Direct Debit');
+    $isPaymentMethodDirectDebit = ($this->rowData['payment_plan_payment_method'] == 'direct_debit');
+    if ($isPaymentProcessorDirectDebit  && !$isPaymentMethodDirectDebit) {
+      throw new CRM_Membershipextrasimporterapi_Exception_InvalidRecurContributionFieldException('Payment plan payment method should be direct debit if the payment processor is direct debit', 1000);
+    }
+
+    if (!$isPaymentProcessorDirectDebit  && $isPaymentMethodDirectDebit) {
+      throw new CRM_Membershipextrasimporterapi_Exception_InvalidRecurContributionFieldException('Payment plan payment processor should be direct debit if the payment method is direct debit', 1100);
+    }
   }
 
   /**
@@ -108,8 +122,21 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContribution {
   }
 
   private function getCurrency() {
-    // todo : not in mapping document, need to discuss with others how to get it.
-    return 'GBP';
+    if (!isset($this->cachedValues['currencies_enabled'])) {
+      $sqlQuery = "SELECT cov.name as name, cov.value as id FROM civicrm_option_value cov 
+                  INNER JOIN civicrm_option_group cog ON cov.option_group_id = cog.id 
+                  WHERE cog.name = 'currencies_enabled'";
+      $result = CRM_Core_DAO::executeQuery($sqlQuery);
+      while ($result->fetch()) {
+        $this->cachedValues['currencies_enabled'][$result->name] = $result->id;
+      }
+    }
+
+    if (!empty($this->cachedValues['currencies_enabled'][$this->rowData['payment_plan_currency']])) {
+      return $this->cachedValues['currencies_enabled'][$this->rowData['payment_plan_currency']];
+    }
+
+    throw new CRM_Membershipextrasimporterapi_Exception_InvalidRecurContributionFieldException('Invalid or disabled payment plan "currency"', 900);
   }
 
   private function calculateFrequencyParameters() {
@@ -156,18 +183,35 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContribution {
     throw new CRM_Membershipextrasimporterapi_Exception_InvalidRecurContributionFieldException('Invalid payment plan "Status"', 200);
   }
 
+  /**
+   * Returns the payment processor id.
+   * Hence that only payment processors
+   * that implements Payment_Manual class
+   * are allowed, since the importer will
+   * only be used with offline payment
+   * processors.
+   *
+   * @return mixed
+   *
+   * @throws CRM_Membershipextrasimporterapi_Exception_InvalidRecurContributionFieldException
+   */
   private function getPaymentProcessorId() {
-    // todo: later to add validation to ensure that direct debit fields exist if the payment processor is 'direct debit'.
     if (!isset($this->cachedValues['payment_processors'])) {
-      $sqlQuery = "SELECT id, name FROM civicrm_payment_processor WHERE is_test = 0";
+      $sqlQuery = "SELECT id, name, class_name FROM civicrm_payment_processor WHERE is_test = 0 AND is_active = 1";
       $result = CRM_Core_DAO::executeQuery($sqlQuery);
       while ($result->fetch()) {
-        $this->cachedValues['payment_processors'][$result->name] = $result->id;
+        $this->cachedValues['payment_processors'][$result->name] = ['id' => $result->id, 'class_name' => $result->class_name];
       }
     }
 
-    if (!empty($this->cachedValues['payment_processors'][$this->rowData['payment_plan_payment_processor']])) {
-      return $this->cachedValues['payment_processors'][$this->rowData['payment_plan_payment_processor']];
+    $paymentProcessorName = $this->rowData['payment_plan_payment_processor'];
+    if (!empty($this->cachedValues['payment_processors'][$paymentProcessorName])) {
+      $offlinePaymentProcessorClassName = 'Payment_Manual';
+      if ($this->cachedValues['payment_processors'][$paymentProcessorName]['class_name'] != $offlinePaymentProcessorClassName) {
+        throw new CRM_Membershipextrasimporterapi_Exception_InvalidRecurContributionFieldException('Only Manual payment plan "Payment Processors"', 1200);
+      }
+
+      return $this->cachedValues['payment_processors'][$paymentProcessorName]['id'];
     }
 
     throw new CRM_Membershipextrasimporterapi_Exception_InvalidRecurContributionFieldException('Invalid payment plan "Payment Processor"', 300);

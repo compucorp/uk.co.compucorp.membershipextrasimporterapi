@@ -17,10 +17,20 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Membership {
   }
 
   public function import() {
-    if (empty($this->rowData['membership_external_id'])) {
-      // todo : when the line item importer is created,
-      // we need to throw an exception if this field  is not set and line_item.entity_table = "civicrm_membership"
+    $isMembershipLineItem = $this->rowData['line_item_entity_table'] == 'civicrm_membership';
+    if (!$isMembershipLineItem) {
       return NULL;
+    }
+
+    // If the membership id is supplied in the CSV as part of the line item entity_id
+    // then we just return it
+    if (!empty($this->rowData['line_item_entity_id'])) {
+      return $this->rowData['line_item_entity_id'];
+    }
+
+    $membershipExternalIdSet = !empty($this->rowData['membership_external_id']);
+    if (!$membershipExternalIdSet) {
+      throw new CRM_Membershipextrasimporterapi_Exception_InvalidMembershipFieldException('Membership external id is required for membership line items', 600);
     }
 
     $membershipId = $this->getMembershipIdIfExist();
@@ -139,6 +149,12 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Membership {
   }
 
   private function isOverriddenStatus($statusOverrideEndDate) {
+    if (!empty($this->rowData['membership_is_status_overridden']) &&
+      $this->rowData['membership_is_status_overridden'] == CRM_Member_StatusOverrideTypes::UNTIL_DATE &&
+      empty($statusOverrideEndDate)) {
+      throw new CRM_Membershipextrasimporterapi_Exception_InvalidMembershipFieldException("Membership status override end date should be provided if the membership is 'Override Until Date'.", 500);
+    }
+
     if (!empty($statusOverrideEndDate)) {
       return CRM_Member_StatusOverrideTypes::UNTIL_DATE;
     }

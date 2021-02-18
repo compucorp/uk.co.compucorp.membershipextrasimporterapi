@@ -1,6 +1,6 @@
 # Membershipextras Importer API
 
-This extension creates new API Endpoint [TODO: put API Endpoint name here], that can be used within [CSV Importer](https://github.com/eileenmcnaughton/nz.co.fuzion.csvimport) extension,
+This extension creates new API Endpoint `MembershipextrasImporter`, that can be used within [CSV Importer](https://github.com/eileenmcnaughton/nz.co.fuzion.csvimport) extension,
 and allows importing Payment Plan membership orders and direct debit information for the use of Membershipextras suite.
 
 # Dependencies
@@ -13,3 +13,8 @@ And optionally :
 - [Manual Direct debit extension](https://github.com/compucorp/uk.co.compucorp.manualdirectdebit) : In case you have payment plan orders paid with Direct debit.
 
 
+It also requires the following custom groups and their custom fields to be activated : 
+
+- Recurring Contribution External ID
+- Contribution External ID
+- Membership External ID

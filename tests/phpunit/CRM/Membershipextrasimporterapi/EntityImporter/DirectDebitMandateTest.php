@@ -13,6 +13,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_DirectDebitMandateTest exte
 
   private $sampleRowData = [
     'payment_plan_payment_processor' => 'Direct Debit',
+    'contribution_payment_method' => 'direct_debit',
     'direct_debit_mandate_reference' => 'Civi00001',
     'direct_debit_mandate_bank_name' => 'Test Bank',
     'direct_debit_mandate_account_holder' => 'Test Account Holder',
@@ -318,6 +319,17 @@ class CRM_Membershipextrasimporterapi_EntityImporter_DirectDebitMandateTest exte
 
     $this->assertCount(1, $mandates);
     $this->assertEquals($newMandateId, $mandates[0]);
+  }
+
+  public function testImportWillNotCreateContributionReferenceRecordIfContributionPaymentMethodIsNotDirectDebit() {
+    $this->sampleRowData['contribution_payment_method'] = 'EFT';
+
+    $mandateImporter = new DirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
+    $mandateImporter->import();
+
+    $mandates = $this->getMandateContributionReferences();
+
+    $this->assertNull($mandates);
   }
 
   private function getMandateIdByReference($mandateReference) {

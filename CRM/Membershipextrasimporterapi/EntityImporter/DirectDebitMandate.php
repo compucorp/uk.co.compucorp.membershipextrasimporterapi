@@ -49,7 +49,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_DirectDebitMandate {
       CRM_Core_DAO::executeQuery($sql);
     }
 
-    if (!$this->isMandateContributionRefExist($mandateId)) {
+    if ($this->isDirectDebitContribution() && !$this->isMandateContributionRefExist($mandateId)) {
       $sql = "INSERT INTO `civicrm_value_dd_information` (`mandate_id` , `entity_id`) 
            VALUES ({$mandateId} , {$this->contributionId})";
       CRM_Core_DAO::executeQuery($sql);
@@ -93,6 +93,14 @@ class CRM_Membershipextrasimporterapi_EntityImporter_DirectDebitMandate {
 
     $dao->fetch();
     if (!empty($dao->mandate_id)) {
+      return TRUE;
+    }
+
+    return FALSE;
+  }
+
+  private function isDirectDebitContribution() {
+    if ($this->rowData['contribution_payment_method'] == 'direct_debit') {
       return TRUE;
     }
 

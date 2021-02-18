@@ -17,10 +17,6 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Contribution {
   }
 
   public function import() {
-    if (empty($this->rowData['contribution_external_id'])) {
-      return NULL;
-    }
-
     $contributionId = $this->getContributionIdIfExist();
     if ($contributionId) {
       return $contributionId;
@@ -144,13 +140,26 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Contribution {
   }
 
   private function getTotalAmount() {
-    //todo : figure out a way to calculate amount, defaulting it to zero for now
+    // The total amount will be set as part of line item creation and not here.
     return 0;
   }
 
   private function getCurrency() {
-    // todo : not in mapping document, need to discuss with others how to get it.
-    return 'GBP';
+    if (!isset($this->cachedValues['currencies_enabled'])) {
+      $sqlQuery = "SELECT cov.name as name, cov.value as id FROM civicrm_option_value cov 
+                  INNER JOIN civicrm_option_group cog ON cov.option_group_id = cog.id 
+                  WHERE cog.name = 'currencies_enabled'";
+      $result = CRM_Core_DAO::executeQuery($sqlQuery);
+      while ($result->fetch()) {
+        $this->cachedValues['currencies_enabled'][$result->name] = $result->id;
+      }
+    }
+
+    if (!empty($this->cachedValues['currencies_enabled'][$this->rowData['contribution_currency']])) {
+      return $this->cachedValues['currencies_enabled'][$this->rowData['contribution_currency']];
+    }
+
+    throw new CRM_Membershipextrasimporterapi_Exception_InvalidContributionFieldException('Invalid or disabled contribution "currency"', 400);
   }
 
   private function calculateIsPayLaterFlag() {

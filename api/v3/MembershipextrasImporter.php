@@ -41,6 +41,12 @@ function _civicrm_api3_membershipextras_importer_create_spec(&$params) {
     'type' => CRM_Utils_Type::T_MONEY,
   ];
 
+  $params['payment_plan_currency'] = [
+    'title' => 'Payment Plan Currency',
+    'type' => CRM_Utils_Type::T_STRING,
+    'api.required' => 1,
+  ];
+
   $params['payment_plan_frequency'] = [
     'title' => 'Payment Plan Frequency',
     'type' => CRM_Utils_Type::T_STRING,
@@ -144,6 +150,12 @@ function _civicrm_api3_membershipextras_importer_create_spec(&$params) {
     'api.required' => 1,
   ];
 
+  $params['contribution_currency'] = [
+    'title' => 'Contribution Currency',
+    'type' => CRM_Utils_Type::T_STRING,
+    'api.required' => 1,
+  ];
+
   $params['contribution_payment_method'] = [
     'title' => 'Contribution Payment Method',
     'type' => CRM_Utils_Type::T_STRING,
@@ -197,7 +209,7 @@ function _civicrm_api3_membershipextras_importer_create_spec(&$params) {
 
   $params['line_item_tax_amount'] = [
     'title' => 'Order Line Tax Amount',
-    'type' => CRM_Utils_Type::T_STRING,
+    'type' => CRM_Utils_Type::T_MONEY,
   ];
 
   $params['line_item_auto_renew'] = [

@@ -12,6 +12,7 @@ use CRM_MembershipExtras_Test_Fabricator_MembershipType as MembershipTypeFabrica
 class CRM_Membershipextrasimporterapi_EntityImporter_MembershipTest extends BaseHeadlessTest {
 
   private $sampleRowData = [
+    'line_item_entity_table' => 'civicrm_membership',
     'membership_external_id' => 'test1',
     'membership_type' => 'Student',
     'membership_join_date' => '20180101000000',
@@ -267,6 +268,46 @@ class CRM_Membershipextrasimporterapi_EntityImporter_MembershipTest extends Base
     $newMembership = $this->getMembershipById($newMembershipId);
 
     $this->assertEquals('2030-01-01', $newMembership['status_override_end_date']);
+  }
+
+  public function testImportWithOverrideUntilDateButWithNoEndDateForTheStatusThrowException() {
+    $this->sampleRowData['membership_external_id'] = 'test19';
+    $this->sampleRowData['membership_is_status_overridden'] = CRM_Member_StatusOverrideTypes::UNTIL_DATE;
+
+    $this->expectException(CRM_Membershipextrasimporterapi_Exception_InvalidMembershipFieldException::class);
+    $this->expectExceptionCode(500);
+
+    $membershipImporter = new MembershipImporter($this->sampleRowData, $this->contactId, $this->recurContributionId);
+    $membershipImporter->import();
+  }
+
+  public function testImportForNonMembershipLineItemWillNotCreateMembership() {
+    $this->sampleRowData['membership_external_id'] = 'test20';
+    $this->sampleRowData['line_item_entity_table'] = 'civicrm_contribution';
+
+    $membershipImporter = new MembershipImporter($this->sampleRowData, $this->contactId, $this->recurContributionId);
+    $membershipId = $membershipImporter->import();
+
+    $this->assertNull($membershipId);
+  }
+
+  public function testImportWithNoExternalIdThrowException() {
+    unset($this->sampleRowData['membership_external_id']);
+
+    $this->expectException(CRM_Membershipextrasimporterapi_Exception_InvalidMembershipFieldException::class);
+    $this->expectExceptionCode(600);
+
+    $membershipImporter = new MembershipImporter($this->sampleRowData, $this->contactId, $this->recurContributionId);
+    $membershipImporter->import();
+  }
+
+  public function testImportWithLineItemEntityIdSetWillReturnItInsteadOfCreatingMembership() {
+    $this->sampleRowData['line_item_entity_id'] = 5580;
+
+    $membershipImporter = new MembershipImporter($this->sampleRowData, $this->contactId, $this->recurContributionId);
+    $membershipId = $membershipImporter->import();
+
+    $this->assertEquals($this->sampleRowData['line_item_entity_id'], $membershipId);
   }
 
   private function getMembershipsByContactId($contactId) {
