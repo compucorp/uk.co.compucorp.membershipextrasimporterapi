@@ -477,7 +477,6 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItemTest extends BaseHe
     $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId, $this->recurContributionId);
     $lineItemImporter->import();
 
-
     $sqlQuery = "SELECT msl.id as id  
                  FROM membershipextras_subscription_line msl 
                  INNER JOIN civicrm_line_item cli ON msl.line_item_id = cli.id 
@@ -495,7 +494,6 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItemTest extends BaseHe
 
     $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId, $this->recurContributionId);
     $lineItemImporter->import();
-
 
     $sqlQuery = "SELECT msl.id as id  
                  FROM membershipextras_subscription_line msl 
