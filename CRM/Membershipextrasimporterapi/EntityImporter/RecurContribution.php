@@ -111,11 +111,9 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContribution {
   }
 
   private function getAmount() {
+    $amount = 0;
     if (!empty($this->rowData['payment_plan_total_amount'])) {
       $amount = $this->rowData['payment_plan_total_amount'];
-    }
-    else {
-      // todo : if null we default this to the total amount of the instalment with the most future date. but how to do that ?
     }
 
     return $amount;

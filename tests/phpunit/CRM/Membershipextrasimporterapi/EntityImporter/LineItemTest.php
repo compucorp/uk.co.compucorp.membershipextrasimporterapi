@@ -5,6 +5,7 @@ use CRM_MembershipExtras_Test_Fabricator_Contact as ContactFabricator;
 use CRM_MembershipExtras_Test_Fabricator_Contribution as ContributionFabricator;
 use CRM_MembershipExtras_Test_Fabricator_MembershipType as MembershipTypeFabricator;
 use CRM_MembershipExtras_Test_Fabricator_Membership as MembershipFabricator;
+use CRM_MembershipExtras_Test_Fabricator_RecurringContribution as RecurContributionFabricator;
 
 /**
  *
@@ -24,12 +25,24 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItemTest extends BaseHe
 
   private $membershipId;
 
+  private $recurContributionId;
+
   private $studentMembershipTypeId;
 
   public function setUp() {
     $this->contactId = ContactFabricator::fabricate()['id'];
 
-    $contributionParams = ['contact_id' => $this->contactId, 'financial_type_id' => 'Member Dues', 'receive_date' => date('Y-m-d'), 'total_amount' => 0, 'skipLineItem' => 1];
+    $recurContributionParams = ['contact_id' => $this->contactId, 'amount' => 0, 'frequency_interval' => 1, 'payment_processor_id' => 1];
+    $this->recurContributionId = RecurContributionFabricator::fabricate($recurContributionParams)['id'];
+
+    $contributionParams = [
+      'contact_id' => $this->contactId,
+      'financial_type_id' => 'Member Dues',
+      'receive_date' => date('Y-m-d'),
+      'total_amount' => 0,
+      'skipLineItem' => 1,
+      'recur_contribution_id' => $this->recurContributionId,
+    ];
     $this->contributionId = ContributionFabricator::fabricate($contributionParams)['id'];
 
     $this->studentMembershipTypeId = MembershipTypeFabricator::fabricate(['name' => 'Student', 'minimum_fee' => 50])['id'];
@@ -67,7 +80,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItemTest extends BaseHe
     $this->sampleRowData['line_item_entity_table'] = 'civicrm_contribution';
     $beforeImportIds = $this->getLineItemsByContributionId($this->contributionId);
 
-    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId);
+    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId, $this->recurContributionId);
     $newLineItemId = $lineItemImporter->import();
 
     $afterImportIds = $this->getLineItemsByContributionId($this->contributionId);
@@ -84,7 +97,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItemTest extends BaseHe
     $this->sampleRowData['line_item_entity_table'] = 'civicrm_membership';
     $beforeImportIds = $this->getLineItemsByContributionId($this->contributionId);
 
-    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId);
+    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId, $this->recurContributionId);
     $newLineItemId = $lineItemImporter->import();
 
     $afterImportIds = $this->getLineItemsByContributionId($this->contributionId);
@@ -103,14 +116,14 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItemTest extends BaseHe
     $this->expectException(CRM_Membershipextrasimporterapi_Exception_InvalidLineItemException::class);
     $this->expectExceptionCode(100);
 
-    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId);
+    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId, $this->recurContributionId);
     $lineItemImporter->import();
   }
 
   public function testImportMembershipLineItemWithEntityIdNotSetWillDefaultItToMembershipId() {
     $this->sampleRowData['line_item_entity_table'] = 'civicrm_membership';
 
-    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId);
+    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId, $this->recurContributionId);
     $newLineItemId = $lineItemImporter->import();
 
     $newLineItem = $this->getLineItemById($newLineItemId);
@@ -125,7 +138,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItemTest extends BaseHe
     $newMembershipId = MembershipFabricator::fabricate($newMembershipParams)['id'];
     $this->sampleRowData['line_item_entity_id'] = $newMembershipId;
 
-    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId);
+    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId, $this->recurContributionId);
     $newLineItemId = $lineItemImporter->import();
 
     $newLineItem = $this->getLineItemById($newLineItemId);
@@ -136,7 +149,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItemTest extends BaseHe
   public function testImportDonationLineItemWillDefaultEntityIdToContributionId() {
     $this->sampleRowData['line_item_entity_table'] = 'civicrm_contribution';
 
-    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId);
+    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId, $this->recurContributionId);
     $newLineItemId = $lineItemImporter->import();
 
     $newLineItem = $this->getLineItemById($newLineItemId);
@@ -145,7 +158,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItemTest extends BaseHe
   }
 
   public function testImportWillSetContributionIdFieldCorrectly() {
-    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId);
+    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId, $this->recurContributionId);
     $newLineItemId = $lineItemImporter->import();
 
     $newLineItem = $this->getLineItemById($newLineItemId);
@@ -156,7 +169,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItemTest extends BaseHe
   public function testImportWithLabelSetWillStoreItCorrectly() {
     $this->sampleRowData['line_item_label'] = 'Test Label';
 
-    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId);
+    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId, $this->recurContributionId);
     $newLineItemId = $lineItemImporter->import();
 
     $newLineItem = $this->getLineItemById($newLineItemId);
@@ -167,7 +180,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItemTest extends BaseHe
   public function testImportMembershipLineItemWithLabelNotSetWillDefaultItToTheMembershipTypeName() {
     $this->sampleRowData['line_item_entity_table'] = 'civicrm_membership';
 
-    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId);
+    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId, $this->recurContributionId);
     $newLineItemId = $lineItemImporter->import();
 
     $newLineItem = $this->getLineItemById($newLineItemId);
@@ -178,7 +191,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItemTest extends BaseHe
   public function testImportContributionLineItemWithLabelNotSetWillDefaultItDonation() {
     $this->sampleRowData['line_item_entity_table'] = 'civicrm_contribution';
 
-    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId);
+    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId, $this->recurContributionId);
     $newLineItemId = $lineItemImporter->import();
 
     $newLineItem = $this->getLineItemById($newLineItemId);
@@ -189,7 +202,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItemTest extends BaseHe
   public function testImportWithQuantitySetWillStoreItCorrectly() {
     $this->sampleRowData['line_item_quantity'] = 3;
 
-    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId);
+    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId, $this->recurContributionId);
     $newLineItemId = $lineItemImporter->import();
 
     $newLineItem = $this->getLineItemById($newLineItemId);
@@ -198,7 +211,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItemTest extends BaseHe
   }
 
   public function testImportWithQuantityNotSetWillDefaultItToOne() {
-    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId);
+    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId, $this->recurContributionId);
     $newLineItemId = $lineItemImporter->import();
 
     $newLineItem = $this->getLineItemById($newLineItemId);
@@ -209,7 +222,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItemTest extends BaseHe
   public function testImportWillStoreUnitPriceCorrectly() {
     $this->sampleRowData['line_item_unit_price'] = 50;
 
-    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId);
+    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId, $this->recurContributionId);
     $newLineItemId = $lineItemImporter->import();
 
     $newLineItem = $this->getLineItemById($newLineItemId);
@@ -221,7 +234,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItemTest extends BaseHe
     $this->sampleRowData['line_item_unit_price'] = 27.5;
     $this->sampleRowData['line_item_quantity'] = 2;
 
-    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId);
+    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId, $this->recurContributionId);
     $newLineItemId = $lineItemImporter->import();
 
     $newLineItem = $this->getLineItemById($newLineItemId);
@@ -230,7 +243,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItemTest extends BaseHe
   }
 
   public function testImportWillStoreFinancialTypeCorrectly() {
-    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId);
+    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId, $this->recurContributionId);
     $newLineItemId = $lineItemImporter->import();
 
     $newLineItem = $this->getLineItemById($newLineItemId);
@@ -244,12 +257,12 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItemTest extends BaseHe
     $this->expectException(CRM_Membershipextrasimporterapi_Exception_InvalidLineItemException::class);
     $this->expectExceptionCode(200);
 
-    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId);
+    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId, $this->recurContributionId);
     $lineItemImporter->import();
   }
 
   public function testImportWillCreateCorrectFinancialItemRecords() {
-    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId);
+    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId, $this->recurContributionId);
     $newLineItemId = $lineItemImporter->import();
 
     $newLineItem = $this->getLineItemById($newLineItemId);
@@ -269,7 +282,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItemTest extends BaseHe
   public function testImportContributionLineItemWithNoPriceFieldDetailsWillDefaultItToContributionAmountPriceFieldValue() {
     $this->sampleRowData['line_item_entity_table'] = 'civicrm_contribution';
 
-    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId);
+    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId, $this->recurContributionId);
     $newLineItemId = $lineItemImporter->import();
 
     $newLineItem = $this->getLineItemById($newLineItemId);
@@ -283,7 +296,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItemTest extends BaseHe
   public function testImportMembershipLineItemWithNoPriceFieldDetailsWillDefaultItToMembershipAmountPriceFieldValue() {
     $this->sampleRowData['line_item_entity_table'] = 'civicrm_membership';
 
-    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId);
+    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId, $this->recurContributionId);
     $newLineItemId = $lineItemImporter->import();
 
     $newLineItem = $this->getLineItemById($newLineItemId);
@@ -295,7 +308,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItemTest extends BaseHe
 
   public function testImportWillUpdateContributionAmountToTheSumOfLineItems() {
     $this->sampleRowData['line_item_unit_price'] = 50;
-    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId);
+    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId, $this->recurContributionId);
     $lineItemImporter->import();
 
     $secondLineItemParams = [
@@ -303,7 +316,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItemTest extends BaseHe
       'line_item_unit_price' => 30.5,
       'line_item_financial_type' => 'Member Dues',
     ];
-    $lineItemImporter = new LineItemImporter($secondLineItemParams, $this->contributionId, $this->membershipId);
+    $lineItemImporter = new LineItemImporter($secondLineItemParams, $this->contributionId, $this->membershipId, $this->recurContributionId);
     $lineItemImporter->import();
 
     $contribution = $this->getContributionById($this->contributionId);
@@ -316,7 +329,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItemTest extends BaseHe
     $this->sampleRowData['line_item_tax_amount'] = 10;
     $this->sampleRowData['line_item_financial_type'] = 'FT Taxed';
 
-    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId);
+    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId, $this->recurContributionId);
     $lineItemImporter->import();
 
     $secondLineItemParams = [
@@ -325,7 +338,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItemTest extends BaseHe
       'line_item_tax_amount' => 5.33,
       'line_item_financial_type' => 'FT Taxed',
     ];
-    $lineItemImporter = new LineItemImporter($secondLineItemParams, $this->contributionId, $this->membershipId);
+    $lineItemImporter = new LineItemImporter($secondLineItemParams, $this->contributionId, $this->membershipId, $this->recurContributionId);
     $lineItemImporter->import();
 
     $contribution = $this->getContributionById($this->contributionId);
@@ -338,7 +351,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItemTest extends BaseHe
     $this->sampleRowData['line_item_tax_amount'] = 10;
     $this->sampleRowData['line_item_financial_type'] = 'FT Taxed';
 
-    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId);
+    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId, $this->recurContributionId);
     $lineItemImporter->import();
 
     $secondLineItemParams = [
@@ -347,7 +360,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItemTest extends BaseHe
       'line_item_tax_amount' => 5.33,
       'line_item_financial_type' => 'FT Taxed',
     ];
-    $lineItemImporter = new LineItemImporter($secondLineItemParams, $this->contributionId, $this->membershipId);
+    $lineItemImporter = new LineItemImporter($secondLineItemParams, $this->contributionId, $this->membershipId, $this->recurContributionId);
     $lineItemImporter->import();
 
     $contribution = $this->getContributionById($this->contributionId);
@@ -360,7 +373,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItemTest extends BaseHe
     $this->sampleRowData['line_item_tax_amount'] = 10;
     $this->sampleRowData['line_item_financial_type'] = 'FT Taxed';
 
-    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId);
+    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId, $this->recurContributionId);
     $lineItemId = $lineItemImporter->import();
 
     $lineItem = $this->getLineItemById($lineItemId);
@@ -369,12 +382,75 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItemTest extends BaseHe
     $this->assertEquals(10, $lineItem['tax_amount']);
   }
 
+  public function testImportWillUpdateRecurContributionAmountToTheSumOfAutoRenewalLineItems() {
+    $this->sampleRowData['line_item_unit_price'] = 50;
+    $this->sampleRowData['line_item_auto_renew'] = 1;
+    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId, $this->recurContributionId);
+    $lineItemImporter->import();
+
+    $secondLineItemParams = [
+      'line_item_entity_table' => 'civicrm_contribution',
+      'line_item_unit_price' => 30.5,
+      'line_item_financial_type' => 'Member Dues',
+      'line_item_auto_renew' => 1,
+    ];
+    $lineItemImporter = new LineItemImporter($secondLineItemParams, $this->contributionId, $this->membershipId, $this->recurContributionId);
+    $lineItemImporter->import();
+
+    $recurContribution = $this->getRecurContributionById($this->recurContributionId);
+
+    $this->assertEquals(80.5, $recurContribution['amount']);
+  }
+
+  public function testImportWillNotIncludeNonAutoRenewalLineItemsInRecurContributionAmount() {
+    $this->sampleRowData['line_item_unit_price'] = 50;
+    $this->sampleRowData['line_item_auto_renew'] = 0;
+    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId, $this->recurContributionId);
+    $lineItemImporter->import();
+
+    $secondLineItemParams = [
+      'line_item_entity_table' => 'civicrm_contribution',
+      'line_item_unit_price' => 30.5,
+      'line_item_financial_type' => 'Member Dues',
+      'line_item_auto_renew' => 1,
+    ];
+    $lineItemImporter = new LineItemImporter($secondLineItemParams, $this->contributionId, $this->membershipId, $this->recurContributionId);
+    $lineItemImporter->import();
+
+    $recurContribution = $this->getRecurContributionById($this->recurContributionId);
+
+    $this->assertEquals(30.5, $recurContribution['amount']);
+  }
+
+  public function testImportWithTaxWillUpdateRecurContributionAmountToTheSumOfAutoRenewalLineItemsWithTaxes() {
+    $this->sampleRowData['line_item_unit_price'] = 50;
+    $this->sampleRowData['line_item_tax_amount'] = 10;
+    $this->sampleRowData['line_item_financial_type'] = 'FT Taxed';
+    $this->sampleRowData['line_item_auto_renew'] = 1;
+    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId, $this->recurContributionId);
+    $lineItemImporter->import();
+
+    $secondLineItemParams = [
+      'line_item_entity_table' => 'civicrm_contribution',
+      'line_item_unit_price' => 30.5,
+      'line_item_tax_amount' => 5,
+      'line_item_financial_type' => 'FT Taxed',
+      'line_item_auto_renew' => 1,
+    ];
+    $lineItemImporter = new LineItemImporter($secondLineItemParams, $this->contributionId, $this->membershipId, $this->recurContributionId);
+    $lineItemImporter->import();
+
+    $recurContribution = $this->getRecurContributionById($this->recurContributionId);
+
+    $this->assertEquals(95.5, $recurContribution['amount']);
+  }
+
   public function testImportWithTaxWillCreateCorrectFinancialItemRecords() {
     $this->sampleRowData['line_item_unit_price'] = 50;
     $this->sampleRowData['line_item_tax_amount'] = 10;
     $this->sampleRowData['line_item_financial_type'] = 'FT Taxed';
 
-    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId);
+    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId, $this->recurContributionId);
     $newLineItemId = $lineItemImporter->import();
 
     $newLineItem = $this->getLineItemById($newLineItemId);
@@ -390,6 +466,44 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItemTest extends BaseHe
 
     $result->fetch();
     $this->assertEquals($newLineItem['tax_amount'], $result->amount);
+  }
+
+  public function testImportWillCreateSubscriptionLineItems() {
+    $this->sampleRowData['line_item_unit_price'] = 50;
+    $this->sampleRowData['line_item_tax_amount'] = 10;
+    $this->sampleRowData['line_item_financial_type'] = 'FT Taxed';
+    $this->sampleRowData['line_item_auto_renew'] = 1;
+
+    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId, $this->recurContributionId);
+    $lineItemImporter->import();
+
+
+    $sqlQuery = "SELECT msl.id as id  
+                 FROM membershipextras_subscription_line msl 
+                 INNER JOIN civicrm_line_item cli ON msl.line_item_id = cli.id 
+                 WHERE msl.contribution_recur_id = {$this->recurContributionId}";
+    $result = CRM_Core_DAO::executeQuery($sqlQuery);
+
+    $this->assertEquals(1, $result->N);
+  }
+
+  public function testImportWithNoAutoRenewalLineItemWillNotCreateSubscriptionLineItems() {
+    $this->sampleRowData['line_item_unit_price'] = 50;
+    $this->sampleRowData['line_item_tax_amount'] = 10;
+    $this->sampleRowData['line_item_financial_type'] = 'FT Taxed';
+    $this->sampleRowData['line_item_auto_renew'] = 0;
+
+    $lineItemImporter = new LineItemImporter($this->sampleRowData, $this->contributionId, $this->membershipId, $this->recurContributionId);
+    $lineItemImporter->import();
+
+
+    $sqlQuery = "SELECT msl.id as id  
+                 FROM membershipextras_subscription_line msl 
+                 INNER JOIN civicrm_line_item cli ON msl.line_item_id = cli.id 
+                 WHERE msl.contribution_recur_id = {$this->recurContributionId}";
+    $result = CRM_Core_DAO::executeQuery($sqlQuery);
+
+    $this->assertEquals(0, $result->N);
   }
 
   private function getLineItemsByContributionId($contributionId) {
@@ -428,6 +542,14 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItemTest extends BaseHe
 
   private function getContributionById($id) {
     $sqlQuery = "SELECT * FROM civicrm_contribution WHERE id = %1";
+    $contribution = CRM_Core_DAO::executeQuery($sqlQuery, [1 => [$id, 'Integer']]);
+    $contribution->fetch();
+
+    return $contribution->toArray();
+  }
+
+  private function getRecurContributionById($id) {
+    $sqlQuery = "SELECT * FROM civicrm_contribution_recur WHERE id = %1";
     $contribution = CRM_Core_DAO::executeQuery($sqlQuery, [1 => [$id, 'Integer']]);
     $contribution->fetch();
 

@@ -33,7 +33,7 @@ class CRM_Membershipextrasimporterapi_CSVRowImporter {
       $membershipPaymentCreator->create();
     }
 
-    $lineItemImporter = new LineItemImporter($this->rowData, $contributionId, $membershipId);
+    $lineItemImporter = new LineItemImporter($this->rowData, $contributionId, $membershipId, $recurContributionId);
     $lineItemImporter->import();
 
     $mandateImporter = new DirectDebitMandateImporter($this->rowData, $this->contactId, $recurContributionId, $contributionId);
