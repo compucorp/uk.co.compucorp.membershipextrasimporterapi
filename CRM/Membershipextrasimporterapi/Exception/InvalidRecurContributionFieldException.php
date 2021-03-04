@@ -1,0 +1,2 @@
+<?php
+class CRM_Membershipextrasimporterapi_Exception_InvalidRecurContributionFieldException extends Exception {}
