@@ -505,6 +505,33 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContributionTest exten
     $recurContributionImporter->import();
   }
 
+  public function testImportWillSetDefaultActiveStatusToFalse() {
+    $this->sampleRowData['payment_plan_external_id'] = 'test37';
+
+    $recurContributionImporter = new RecurContributionImporter($this->sampleRowData, $this->contactId);
+    $newRecurContributionId = $recurContributionImporter->import();
+
+    $sqlQuery = "SELECT is_active FROM civicrm_value_payment_plan_extra_attributes WHERE entity_id = {$newRecurContributionId}";
+    $result = CRM_Core_DAO::executeQuery($sqlQuery);
+    $result->fetch();
+
+    $this->assertEquals(0, $result->is_active);
+  }
+
+  public function testImportWillSetActiveStatus() {
+    $this->sampleRowData['payment_plan_external_id'] = 'test37';
+    $this->sampleRowData['payment_plan_is_active'] = 1;
+
+    $recurContributionImporter = new RecurContributionImporter($this->sampleRowData, $this->contactId);
+    $newRecurContributionId = $recurContributionImporter->import();
+
+    $sqlQuery = "SELECT is_active FROM civicrm_value_payment_plan_extra_attributes WHERE entity_id = {$newRecurContributionId}";
+    $result = CRM_Core_DAO::executeQuery($sqlQuery);
+    $result->fetch();
+
+    $this->assertEquals(1, $result->is_active);
+  }
+
   private function getRecurContributionsByContactId($contactId) {
     $recurContributionIds = NULL;
 

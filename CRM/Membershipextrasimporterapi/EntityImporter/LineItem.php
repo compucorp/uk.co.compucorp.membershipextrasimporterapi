@@ -10,6 +10,8 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItem {
 
   private $membershipId;
 
+  private $recurContributionId;
+
   private $cachedValues;
 
   private $entityTable;
@@ -22,10 +24,11 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItem {
 
   private $priceFieldValue;
 
-  public function __construct($rowData, $contributionId, $membershipId) {
+  public function __construct($rowData, $contributionId, $membershipId, $recurContributionId) {
     $this->rowData = $rowData;
     $this->contributionId = $contributionId;
     $this->membershipId = $membershipId;
+    $this->recurContributionId = $recurContributionId;
     $this->setContribution($contributionId);
 
     if ($membershipId != NULL) {
@@ -87,6 +90,8 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItem {
 
     $mappedLineItemParams = $this->mapLineItemSQLParamsToNames($sqlParams);
 
+    $this->createSubscriptionLineItems($mappedLineItemParams);
+
     $financialItemId = $this->createFinancialItemRecord($lineItemId, $mappedLineItemParams);
     $this->createEntityFinancialTransactionRecord($financialItemId, $mappedLineItemParams['line_total']);
 
@@ -96,6 +101,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItem {
     }
 
     $this->updateRelatedContributionAmounts($mappedLineItemParams['line_total'], $mappedLineItemParams['tax_amount']);
+    $this->updateRelatedRecurContributionAmount($mappedLineItemParams['line_total'], $mappedLineItemParams['tax_amount']);
 
     return $lineItemId;
   }
@@ -154,6 +160,107 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItem {
     if ($isThereTax) {
       $columnsToInsert .= ', `tax_amount`';
       $columnsValuesIndexes .= ', %11';
+    }
+
+    return "INSERT INTO `civicrm_line_item` ({$columnsToInsert})
+             VALUES ({$columnsValuesIndexes})";
+  }
+
+  /**
+   * Creates the subscription line items which
+   * is done by duplicating line items but with
+   * contribution_id empty, and then creating
+   * membershipextras_subscription_line record
+   * that is linked to the duplicate line item.
+   *
+   * hence that we only create subscription line items
+   * for line items with "auto renew" flag set, which
+   * should be the case only for line items that
+   * belong to the last installment in an active
+   * payment plan (recurring contribution).
+   *
+   * regarding the start date of each line item,
+   * normally we set it to the minimum membership start
+   * date among all payment plan memberships (in case
+   * it has more than one), and since we lack such information usually
+   * in the imported file, here we just set it to be the
+   * start date of membership if it is a membership line item
+   * , or to the contribution receive date if it is a
+   * contribution line item, those after first auto-renewal,
+   * a new subscription line items will be created that follow
+   * the normal Membershipextras logic (which uses minimum membership
+   * start date).
+   *
+   * @param array $mappedLineItemParams
+   */
+  private function createSubscriptionLineItems($mappedLineItemParams) {
+    if (empty($this->rowData['line_item_auto_renew'])) {
+      return;
+    }
+
+    $sqlParams = $this->prepareDuplicateLineItemSqlParams($mappedLineItemParams);
+    $sqlQuery = $this->prepareDuplicateLineItemSqlQuery($sqlParams);
+    CRM_Core_DAO::executeQuery($sqlQuery, $sqlParams);
+
+    $dao = CRM_Core_DAO::executeQuery('SELECT LAST_INSERT_ID() as line_item_id');
+    $dao->fetch();
+    $duplicateLineItemId = $dao->line_item_id;
+
+    if (!empty($this->membership)) {
+      $subscriptionLineItemStartDate = $this->membership['start_date'];
+    }
+    else {
+      $subscriptionLineItemStartDate = DateTime::createFromFormat('Y-m-d', $this->contribution['receive_date']);
+      $subscriptionLineItemStartDate = $subscriptionLineItemStartDate->format('Y-m-d');
+    }
+
+    $sqlParams = [
+      1 => [$this->recurContributionId, 'Integer'],
+      2 => [$duplicateLineItemId, 'Integer'],
+      3 => [$subscriptionLineItemStartDate, 'String'],
+      4 => [1, 'Integer'],
+    ];
+    $sqlQuery = "INSERT INTO `membershipextras_subscription_line` (`contribution_recur_id` , `line_item_id`, `start_date`, `auto_renew`) 
+                 VALUES (%1, %2, %3, %4)";
+    CRM_Core_DAO::executeQuery($sqlQuery, $sqlParams);
+  }
+
+  private function prepareDuplicateLineItemSqlParams($mappedLineItemParams) {
+    return [
+      1 => [$this->entityTable, 'String'],
+      2 => [$this->entityId, 'Integer'],
+      3 => [$mappedLineItemParams['price_field_id'], 'Integer'],
+      4 => [$mappedLineItemParams['price_field_value_id'], 'Integer'],
+      5 => [$mappedLineItemParams['line_item_label'], 'String'],
+      6 => [$mappedLineItemParams['quantity'], 'Integer'],
+      7 => [$mappedLineItemParams['unit_price'], 'Money'],
+      8 => [$mappedLineItemParams['line_total'], 'Money'],
+      9 => [$mappedLineItemParams['financial_type_id'], 'Integer'],
+      10 => [$mappedLineItemParams['tax_amount'], 'Money'],
+    ];
+  }
+
+  /**
+   * Prepares the duplicate line item Insert SQL query, hence
+   * that we dont' set the contribution_id (same as in Membershipextras)
+   * in the duplicate line item record to avoid
+   * any financial impact for it, since it is merely
+   * used as a template for renewing payment plans.
+   *
+   * @param array $sqlParams
+   *
+   * @return string
+   */
+  private function prepareDuplicateLineItemSqlQuery($sqlParams) {
+    $columnsToInsert = '`entity_table` , `entity_id` , `price_field_id` , `price_field_value_id`,
+            `label` , `qty` , `unit_price` , `line_total` , `financial_type_id`';
+
+    $columnsValuesIndexes = '%1, %2, %3, %4, %5, %6, %7, %8, %9';
+
+    $isThereTax = !empty($sqlParams[10][0]);
+    if ($isThereTax) {
+      $columnsToInsert .= ', `tax_amount`';
+      $columnsValuesIndexes .= ', %10';
     }
 
     return "INSERT INTO `civicrm_line_item` ({$columnsToInsert})
@@ -405,6 +512,37 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItem {
     }
 
     $sqlQuery = "UPDATE `civicrm_contribution` SET {$amountFieldOperation} WHERE id = {$this->contributionId}";
+    CRM_Core_DAO::executeQuery($sqlQuery, $sqlParams);
+  }
+
+  /**
+   * Updates the recurring contribution amount.
+   *
+   * Which is achieved by keep adding the line
+   * item amount (plus tax) we currently processing
+   * to the related recurring contribution amount,
+   * since line items are processed row by row and
+   * there is no way to know the total amount in advance.
+   *
+   * Hence that we only add amounts for line
+   * items with "auto renew" flag set to True,
+   * since it should only be set for last installment
+   * in active payment plans (recurring contributions),
+   * given that the recurring contribution amount usually
+   * represents a single installment amount.
+   *
+   * @param float $lineItemTotalAmount
+   * @param float $taxAmount
+   */
+  private function updateRelatedRecurContributionAmount($lineItemTotalAmount, $taxAmount) {
+    if (empty($this->rowData['line_item_auto_renew'])) {
+      return;
+    }
+
+    $totalAmount = $lineItemTotalAmount + $taxAmount;
+    $sqlParams[1] = [$totalAmount, 'Money'];
+
+    $sqlQuery = "UPDATE `civicrm_contribution_recur` SET `amount` = `amount` + %1 WHERE id = {$this->recurContributionId}";
     CRM_Core_DAO::executeQuery($sqlQuery, $sqlParams);
   }
 

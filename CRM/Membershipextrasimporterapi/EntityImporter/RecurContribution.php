@@ -37,6 +37,8 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContribution {
     $dao->fetch();
     $recurContributionId = $dao->recur_contribution_id;
 
+    $this->setActiveStatus($recurContributionId);
+
     $sqlQuery = "INSERT INTO `civicrm_value_contribution_recur_ext_id` (`entity_id` , `external_id`) 
            VALUES ({$recurContributionId}, %1)";
     CRM_Core_DAO::executeQuery($sqlQuery, [1 => [$this->rowData['payment_plan_external_id'], 'String']]);
@@ -111,11 +113,9 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContribution {
   }
 
   private function getAmount() {
+    $amount = 0;
     if (!empty($this->rowData['payment_plan_total_amount'])) {
       $amount = $this->rowData['payment_plan_total_amount'];
-    }
-    else {
-      // todo : if null we default this to the total amount of the instalment with the most future date. but how to do that ?
     }
 
     return $amount;
@@ -291,6 +291,20 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContribution {
     }
 
     return $date;
+  }
+
+  private function setActiveStatus($recurContributionId) {
+    $isActive = 0;
+    if (!empty($this->rowData['payment_plan_is_active'])) {
+      $isActive = 1;
+    }
+
+    $activationQuery = "
+      INSERT INTO civicrm_value_payment_plan_extra_attributes  
+      (entity_id, is_active) VALUES ({$recurContributionId}, {$isActive}) 
+      ON DUPLICATE KEY UPDATE is_active = {$isActive} 
+     ";
+    CRM_Core_DAO::executeQuery($activationQuery);
   }
 
 }

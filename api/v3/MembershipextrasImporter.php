@@ -96,6 +96,11 @@ function _civicrm_api3_membershipextras_importer_create_spec(&$params) {
     'api.required' => 1,
   ];
 
+  $params['payment_plan_is_active'] = [
+    'title' => 'Payment Plan Is Active?',
+    'type' => CRM_Utils_Type::T_INT,
+  ];
+
   // Membership
   $params['membership_external_id'] = [
     'title' => 'Membership External Id',
