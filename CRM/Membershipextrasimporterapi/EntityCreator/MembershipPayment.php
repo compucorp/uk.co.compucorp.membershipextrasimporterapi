@@ -1,5 +1,7 @@
 <?php
 
+use CRM_Membershipextrasimporterapi_Helper_SQLQueryRunner as SQLQueryRunner;
+
 class CRM_Membershipextrasimporterapi_EntityCreator_MembershipPayment {
 
   private $membershipId;
@@ -23,14 +25,14 @@ class CRM_Membershipextrasimporterapi_EntityCreator_MembershipPayment {
     }
 
     $sqlQuery = "INSERT INTO civicrm_membership_payment (membership_id, contribution_id) VALUES ({$this->membershipId}, {$this->contributionId})";
-    CRM_Core_DAO::executeQuery($sqlQuery);
+    SQLQueryRunner::executeQuery($sqlQuery);
 
     return TRUE;
   }
 
   private function isRecordAlreadyCreated() {
     $sqlQuery = "SELECT id FROM civicrm_membership_payment WHERE membership_id = {$this->membershipId} AND contribution_id = {$this->contributionId}";
-    $result = CRM_Core_DAO::executeQuery($sqlQuery);
+    $result = SQLQueryRunner::executeQuery($sqlQuery);
     if ($result->fetch()) {
       return TRUE;
     }

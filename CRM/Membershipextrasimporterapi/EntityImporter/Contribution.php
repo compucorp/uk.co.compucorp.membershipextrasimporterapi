@@ -1,5 +1,7 @@
 <?php
 
+use CRM_Membershipextrasimporterapi_Helper_SQLQueryRunner as SQLQueryRunner;
+
 class CRM_Membershipextrasimporterapi_EntityImporter_Contribution {
 
   private $rowData;
@@ -27,15 +29,15 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Contribution {
                  `receive_date` , `total_amount` , `currency`, `contribution_recur_id` , `is_pay_later`,
                   `contribution_status_id`) 
                  VALUES (%1, %2, %3, %4, %5, %6, %7, %8, %9)";
-    CRM_Core_DAO::executeQuery($sqlQuery, $sqlParams);
+    SQLQueryRunner::executeQuery($sqlQuery, $sqlParams);
 
-    $dao = CRM_Core_DAO::executeQuery('SELECT LAST_INSERT_ID() as contribution_id');
+    $dao = SQLQueryRunner::executeQuery('SELECT LAST_INSERT_ID() as contribution_id');
     $dao->fetch();
     $contributionId = $dao->contribution_id;
 
     $sqlQuery = "INSERT INTO `civicrm_value_contribution_ext_id` (`entity_id` , `external_id`) 
            VALUES ({$contributionId}, %1)";
-    CRM_Core_DAO::executeQuery($sqlQuery, [1 => [$this->rowData['contribution_external_id'], 'String']]);
+    SQLQueryRunner::executeQuery($sqlQuery, [1 => [$this->rowData['contribution_external_id'], 'String']]);
 
     $mappedContributionParams = $this->mapContributionSQLParamsToNames($sqlParams);
     $financialTransactionId = $this->createFinancialTransactionRecord($mappedContributionParams);
@@ -46,7 +48,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Contribution {
 
   private function getContributionIdIfExist() {
     $sqlQuery = "SELECT entity_id as id FROM civicrm_value_contribution_ext_id WHERE external_id = %1";
-    $contributionId = CRM_Core_DAO::executeQuery($sqlQuery, [1 => [$this->rowData['contribution_external_id'], 'String']]);
+    $contributionId = SQLQueryRunner::executeQuery($sqlQuery, [1 => [$this->rowData['contribution_external_id'], 'String']]);
     $contributionId->fetch();
 
     if (!empty($contributionId->id)) {
@@ -95,7 +97,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Contribution {
   private function getFinancialTypeId() {
     if (!isset($this->cachedValues['financial_types'])) {
       $sqlQuery = "SELECT id, name FROM civicrm_financial_type";
-      $result = CRM_Core_DAO::executeQuery($sqlQuery);
+      $result = SQLQueryRunner::executeQuery($sqlQuery);
       while ($result->fetch()) {
         $this->cachedValues['financial_types'][$result->name] = $result->id;
       }
@@ -113,7 +115,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Contribution {
       $sqlQuery = "SELECT cov.name as name, cov.value as id FROM civicrm_option_value cov 
                   INNER JOIN civicrm_option_group cog ON cov.option_group_id = cog.id 
                   WHERE cog.name = 'payment_instrument'";
-      $result = CRM_Core_DAO::executeQuery($sqlQuery);
+      $result = SQLQueryRunner::executeQuery($sqlQuery);
       while ($result->fetch()) {
         $this->cachedValues['payment_methods'][$result->name] = $result->id;
       }
@@ -149,7 +151,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Contribution {
       $sqlQuery = "SELECT cov.name as name, cov.value as id FROM civicrm_option_value cov 
                   INNER JOIN civicrm_option_group cog ON cov.option_group_id = cog.id 
                   WHERE cog.name = 'currencies_enabled'";
-      $result = CRM_Core_DAO::executeQuery($sqlQuery);
+      $result = SQLQueryRunner::executeQuery($sqlQuery);
       while ($result->fetch()) {
         $this->cachedValues['currencies_enabled'][$result->name] = $result->id;
       }
@@ -185,7 +187,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Contribution {
       $sqlQuery = "SELECT cov.name as name, cov.value as id FROM civicrm_option_value cov 
                   INNER JOIN civicrm_option_group cog ON cov.option_group_id = cog.id 
                   WHERE cog.name = 'contribution_status'";
-      $result = CRM_Core_DAO::executeQuery($sqlQuery);
+      $result = SQLQueryRunner::executeQuery($sqlQuery);
       while ($result->fetch()) {
         $this->cachedValues['contribution_statuses'][$result->name] = $result->id;
       }
@@ -208,9 +210,9 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Contribution {
     ];
     $sqlQuery = "INSERT INTO `civicrm_financial_trxn` (`to_financial_account_id`, `total_amount` , `currency`, `status_id` , `payment_instrument_id`) 
             VALUES (%1 , %2, %3, %4, %5)";
-    CRM_Core_DAO::executeQuery($sqlQuery, $sqlParams);
+    SQLQueryRunner::executeQuery($sqlQuery, $sqlParams);
 
-    $dao = CRM_Core_DAO::executeQuery('SELECT LAST_INSERT_ID() as id');
+    $dao = SQLQueryRunner::executeQuery('SELECT LAST_INSERT_ID() as id');
     $dao->fetch();
     return $dao->id;
   }
@@ -228,14 +230,14 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Contribution {
     $paymentProcessorId = $this->getPaymentProcessorIdFromRecurContribution();
     $sqlQuery = "SELECT financial_account_id FROM civicrm_entity_financial_account 
                    WHERE entity_table = 'civicrm_payment_processor' AND entity_id = {$paymentProcessorId}";
-    $result = CRM_Core_DAO::executeQuery($sqlQuery);
+    $result = SQLQueryRunner::executeQuery($sqlQuery);
     $result->fetch();
     return $result->financial_account_id;
   }
 
   private function getPaymentProcessorIdFromRecurContribution() {
     $sqlQuery = "SELECT payment_processor_id from civicrm_contribution_recur WHERE id = {$this->recurContributionId}";
-    $result = CRM_Core_DAO::executeQuery($sqlQuery);
+    $result = SQLQueryRunner::executeQuery($sqlQuery);
     $result->fetch();
     return $result->payment_processor_id;
   }
@@ -246,7 +248,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Contribution {
     ];
     $sqlQuery = "INSERT INTO `civicrm_entity_financial_trxn` (`entity_table`, `entity_id` , `financial_trxn_id`, `amount`) 
                 VALUES ('civicrm_contribution', {$contributionId}, {$financialTransactionId}, %1)";
-    CRM_Core_DAO::executeQuery($sqlQuery, $sqlParams);
+    SQLQueryRunner::executeQuery($sqlQuery, $sqlParams);
   }
 
 }

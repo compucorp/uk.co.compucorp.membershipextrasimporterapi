@@ -1,5 +1,7 @@
 <?php
 
+use CRM_Membershipextrasimporterapi_Helper_SQLQueryRunner as SQLQueryRunner;
+
 class CRM_Membershipextrasimporterapi_EntityImporter_Membership {
 
   private $rowData;
@@ -42,22 +44,22 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Membership {
     $sqlQuery = "INSERT INTO `civicrm_membership` (`contact_id` , `membership_type_id`, `join_date`, `start_date`, `end_date`, `status_id`,
                  `is_pay_later`, `contribution_recur_id`, `is_override`, `status_override_end_date`) 
             VALUES (%1, %2, %3, %4, %5, %6, %7, %8, %9, %10)";
-    CRM_Core_DAO::executeQuery($sqlQuery, $sqlParams);
+    SQLQueryRunner::executeQuery($sqlQuery, $sqlParams);
 
-    $dao = CRM_Core_DAO::executeQuery('SELECT LAST_INSERT_ID() as membership_id');
+    $dao = SQLQueryRunner::executeQuery('SELECT LAST_INSERT_ID() as membership_id');
     $dao->fetch();
     $membershipId = $dao->membership_id;
 
     $sqlQuery = "INSERT INTO `civicrm_value_membership_ext_id` (`entity_id` , `external_id`) 
            VALUES ({$membershipId}, %1)";
-    CRM_Core_DAO::executeQuery($sqlQuery, [1 => [$this->rowData['membership_external_id'], 'String']]);
+    SQLQueryRunner::executeQuery($sqlQuery, [1 => [$this->rowData['membership_external_id'], 'String']]);
 
     return $membershipId;
   }
 
   private function getMembershipIdIfExist() {
     $sqlQuery = "SELECT entity_id as id FROM civicrm_value_membership_ext_id WHERE external_id = %1";
-    $membershipId = CRM_Core_DAO::executeQuery($sqlQuery, [1 => [$this->rowData['membership_external_id'], 'String']]);
+    $membershipId = SQLQueryRunner::executeQuery($sqlQuery, [1 => [$this->rowData['membership_external_id'], 'String']]);
     $membershipId->fetch();
 
     if (!empty($membershipId->id)) {
@@ -98,7 +100,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Membership {
 
     if (!isset($this->cachedValues['membership_types'])) {
       $sqlQuery = "SELECT id, name FROM civicrm_membership_type";
-      $result = CRM_Core_DAO::executeQuery($sqlQuery);
+      $result = SQLQueryRunner::executeQuery($sqlQuery);
       while ($result->fetch()) {
         $this->cachedValues['membership_types'][$result->name] = $result->id;
       }
@@ -127,7 +129,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Membership {
 
     if (!isset($this->cachedValues['membership_statuses'])) {
       $sqlQuery = "SELECT id, name FROM civicrm_membership_status";
-      $result = CRM_Core_DAO::executeQuery($sqlQuery);
+      $result = SQLQueryRunner::executeQuery($sqlQuery);
       while ($result->fetch()) {
         $this->cachedValues['membership_statuses'][$result->name] = $result->id;
       }

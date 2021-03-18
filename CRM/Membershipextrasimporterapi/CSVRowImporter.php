@@ -6,6 +6,7 @@ use CRM_Membershipextrasimporterapi_EntityImporter_Contribution as ContributionI
 use CRM_Membershipextrasimporterapi_EntityCreator_MembershipPayment as MembershipPaymentCreator;
 use CRM_Membershipextrasimporterapi_EntityImporter_LineItem as LineItemImporter;
 use CRM_Membershipextrasimporterapi_EntityImporter_DirectDebitMandate as DirectDebitMandateImporter;
+use CRM_Membershipextrasimporterapi_Helper_SQLQueryRunner as SQLQueryRunner;
 
 class CRM_Membershipextrasimporterapi_CSVRowImporter {
 
@@ -45,7 +46,7 @@ class CRM_Membershipextrasimporterapi_CSVRowImporter {
 
     if (!empty($this->rowData['contact_id'])) {
       $sqlQuery = "SELECT id FROM civicrm_contact WHERE id = %1";
-      $result = CRM_Core_DAO::executeQuery($sqlQuery, [1 => [$this->rowData['contact_id'], 'Integer']]);
+      $result = SQLQueryRunner::executeQuery($sqlQuery, [1 => [$this->rowData['contact_id'], 'Integer']]);
       if (!$result->fetch()) {
         throw new CRM_Membershipextrasimporterapi_Exception_InvalidContactException("Cannot find contact with Id = $this->rowData['contact_id']", 100);
       }
@@ -55,7 +56,7 @@ class CRM_Membershipextrasimporterapi_CSVRowImporter {
 
     if (!empty($this->rowData['contact_external_id'])) {
       $sqlQuery = "SELECT id FROM civicrm_contact WHERE external_identifier = %1";
-      $result = CRM_Core_DAO::executeQuery($sqlQuery, [1 => [$this->rowData['contact_external_id'], 'String']]);
+      $result = SQLQueryRunner::executeQuery($sqlQuery, [1 => [$this->rowData['contact_external_id'], 'String']]);
       if (!$result->fetch()) {
         throw new CRM_Membershipextrasimporterapi_Exception_InvalidContactException("Cannot find contact with External Id = $this->rowData['contact_external_id']", 200);
       }

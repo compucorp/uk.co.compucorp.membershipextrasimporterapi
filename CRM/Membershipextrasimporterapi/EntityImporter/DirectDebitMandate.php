@@ -1,5 +1,7 @@
 <?php
 
+use CRM_Membershipextrasimporterapi_Helper_SQLQueryRunner as SQLQueryRunner;
+
 class CRM_Membershipextrasimporterapi_EntityImporter_DirectDebitMandate {
 
   private $rowData;
@@ -32,27 +34,27 @@ class CRM_Membershipextrasimporterapi_EntityImporter_DirectDebitMandate {
       $sql = "INSERT INTO civicrm_value_dd_mandate 
             (entity_id, bank_name, account_holder_name, ac_number, sort_code, dd_code, dd_ref, start_date, originator_number) 
             VALUES (%1, %2, %3, %4, %5, %6, %7, %8, %9)";
-      CRM_Core_DAO::executeQuery($sql, $sqlParams);
+      SQLQueryRunner::executeQuery($sql, $sqlParams);
 
-      $dao = CRM_Core_DAO::executeQuery('SELECT LAST_INSERT_ID() as mandate_id');
+      $dao = SQLQueryRunner::executeQuery('SELECT LAST_INSERT_ID() as mandate_id');
       $dao->fetch();
       $mandateId = $dao->mandate_id;
     }
 
     if ($this->isRecurContributionAttachedToAnyMandate()) {
       $sql = "UPDATE `dd_contribution_recurr_mandate_ref` SET `mandate_id` = {$mandateId} WHERE `recurr_id` = {$this->recurContributionId}";
-      CRM_Core_DAO::executeQuery($sql);
+      SQLQueryRunner::executeQuery($sql);
     }
     else {
       $sql = "INSERT INTO `dd_contribution_recurr_mandate_ref` (`recurr_id` , `mandate_id`) 
            VALUES ({$this->recurContributionId} , {$mandateId})";
-      CRM_Core_DAO::executeQuery($sql);
+      SQLQueryRunner::executeQuery($sql);
     }
 
     if ($this->isDirectDebitContribution() && !$this->isMandateContributionRefExist($mandateId)) {
       $sql = "INSERT INTO `civicrm_value_dd_information` (`mandate_id` , `entity_id`) 
            VALUES ({$mandateId} , {$this->contributionId})";
-      CRM_Core_DAO::executeQuery($sql);
+      SQLQueryRunner::executeQuery($sql);
     }
 
     return $mandateId;
@@ -74,7 +76,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_DirectDebitMandate {
 
   private function getMandateIdIfExist() {
     $sql = "SELECT id FROM civicrm_value_dd_mandate WHERE dd_ref = %1";
-    $dao = CRM_Core_DAO::executeQuery($sql, [
+    $dao = SQLQueryRunner::executeQuery($sql, [
       1 => [$this->rowData['direct_debit_mandate_reference'], 'String'],
     ]);
 
@@ -89,7 +91,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_DirectDebitMandate {
   private function isRecurContributionAttachedToAnyMandate() {
     $sql = "SELECT mandate_id FROM dd_contribution_recurr_mandate_ref  
             WHERE recurr_id = {$this->recurContributionId}";
-    $dao = CRM_Core_DAO::executeQuery($sql);
+    $dao = SQLQueryRunner::executeQuery($sql);
 
     $dao->fetch();
     if (!empty($dao->mandate_id)) {
@@ -110,7 +112,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_DirectDebitMandate {
   private function isMandateContributionRefExist($mandateId) {
     $sql = "SELECT mandate_id FROM civicrm_value_dd_information  
             WHERE mandate_id = %1 AND entity_id = %2";
-    $dao = CRM_Core_DAO::executeQuery($sql, [
+    $dao = SQLQueryRunner::executeQuery($sql, [
       1 => [$mandateId, 'Integer'],
       2 => [$this->contributionId, 'Integer'],
     ]);
@@ -218,7 +220,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_DirectDebitMandate {
       $sqlQuery = "SELECT cov.name as name, cov.value as id FROM civicrm_option_value cov 
                   INNER JOIN civicrm_option_group cog ON cov.option_group_id = cog.id 
                   WHERE cog.name = 'direct_debit_originator_number'";
-      $result = CRM_Core_DAO::executeQuery($sqlQuery);
+      $result = SQLQueryRunner::executeQuery($sqlQuery);
       while ($result->fetch()) {
         $this->cachedValues['originator_numbers'][$result->name] = $result->id;
       }
