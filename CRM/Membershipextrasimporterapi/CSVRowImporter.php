@@ -20,25 +20,35 @@ class CRM_Membershipextrasimporterapi_CSVRowImporter {
   }
 
   public function import() {
-    $recurContributionImporter = new RecurContributionImporter($this->rowData, $this->contactId);
-    $recurContributionId = $recurContributionImporter->import();
+    $transaction = new CRM_Core_Transaction();
+    try {
+      $recurContributionImporter = new RecurContributionImporter($this->rowData, $this->contactId);
+      $recurContributionId = $recurContributionImporter->import();
 
-    $membershipImporter = new MembershipImporter($this->rowData, $this->contactId, $recurContributionId);
-    $membershipId = $membershipImporter->import();
+      $membershipImporter = new MembershipImporter($this->rowData, $this->contactId, $recurContributionId);
+      $membershipId = $membershipImporter->import();
 
-    $contributionImporter = new ContributionImporter($this->rowData, $this->contactId, $recurContributionId);
-    $contributionId = $contributionImporter->import();
+      $contributionImporter = new ContributionImporter($this->rowData, $this->contactId, $recurContributionId);
+      $contributionId = $contributionImporter->import();
 
-    if ($membershipId == NULL) {
-      $membershipPaymentCreator = new MembershipPaymentCreator($membershipId, $contributionId);
-      $membershipPaymentCreator->create();
+      if ($membershipId == NULL) {
+        $membershipPaymentCreator = new MembershipPaymentCreator($membershipId, $contributionId);
+        $membershipPaymentCreator->create();
+      }
+
+      $lineItemImporter = new LineItemImporter($this->rowData, $contributionId, $membershipId, $recurContributionId);
+      $lineItemImporter->import();
+
+      $mandateImporter = new DirectDebitMandateImporter($this->rowData, $this->contactId, $recurContributionId, $contributionId);
+      $mandateImporter->import();
+
+      $transaction->commit();
     }
-
-    $lineItemImporter = new LineItemImporter($this->rowData, $contributionId, $membershipId, $recurContributionId);
-    $lineItemImporter->import();
-
-    $mandateImporter = new DirectDebitMandateImporter($this->rowData, $this->contactId, $recurContributionId, $contributionId);
-    $mandateImporter->import();
+    catch (Exception $e) {
+      $transaction->rollback();
+      // we leave for the CSV importer extension to handle any thrown exception.
+      throw $e;
+    }
   }
 
   private function getContactId() {
