@@ -514,6 +514,13 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItem {
 
     $sqlQuery = "UPDATE `civicrm_contribution` SET {$amountFieldOperation} WHERE id = {$this->contributionId}";
     SQLQueryRunner::executeQuery($sqlQuery, $sqlParams);
+
+    $trxSqlParams[1] = [$totalAmount, 'Money'];
+    $sqlQuery = "UPDATE `civicrm_entity_financial_trxn` ceft 
+                 INNER JOIN civicrm_financial_trxn cft ON ceft.financial_trxn_id = cft.id      
+                 SET ceft.amount = ceft.amount + %1, cft.total_amount = cft.total_amount + %1
+                 WHERE ceft.entity_table = 'civicrm_contribution' AND ceft.entity_id = {$this->contributionId}";
+    SQLQueryRunner::executeQuery($sqlQuery, $trxSqlParams);
   }
 
   /**
