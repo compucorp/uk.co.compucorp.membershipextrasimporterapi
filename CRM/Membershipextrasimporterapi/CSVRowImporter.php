@@ -6,6 +6,7 @@ use CRM_Membershipextrasimporterapi_EntityImporter_Contribution as ContributionI
 use CRM_Membershipextrasimporterapi_EntityCreator_MembershipPayment as MembershipPaymentCreator;
 use CRM_Membershipextrasimporterapi_EntityImporter_LineItem as LineItemImporter;
 use CRM_Membershipextrasimporterapi_EntityImporter_DirectDebitMandate as DirectDebitMandateImporter;
+use CRM_Membershipextrasimporterapi_Helper_SQLQueryRunner as SQLQueryRunner;
 
 class CRM_Membershipextrasimporterapi_CSVRowImporter {
 
@@ -19,25 +20,35 @@ class CRM_Membershipextrasimporterapi_CSVRowImporter {
   }
 
   public function import() {
-    $recurContributionImporter = new RecurContributionImporter($this->rowData, $this->contactId);
-    $recurContributionId = $recurContributionImporter->import();
+    $transaction = new CRM_Core_Transaction();
+    try {
+      $recurContributionImporter = new RecurContributionImporter($this->rowData, $this->contactId);
+      $recurContributionId = $recurContributionImporter->import();
 
-    $membershipImporter = new MembershipImporter($this->rowData, $this->contactId, $recurContributionId);
-    $membershipId = $membershipImporter->import();
+      $membershipImporter = new MembershipImporter($this->rowData, $this->contactId, $recurContributionId);
+      $membershipId = $membershipImporter->import();
 
-    $contributionImporter = new ContributionImporter($this->rowData, $this->contactId, $recurContributionId);
-    $contributionId = $contributionImporter->import();
+      $contributionImporter = new ContributionImporter($this->rowData, $this->contactId, $recurContributionId);
+      $contributionId = $contributionImporter->import();
 
-    if ($membershipId == NULL) {
-      $membershipPaymentCreator = new MembershipPaymentCreator($membershipId, $contributionId);
-      $membershipPaymentCreator->create();
+      if ($membershipId == NULL) {
+        $membershipPaymentCreator = new MembershipPaymentCreator($membershipId, $contributionId);
+        $membershipPaymentCreator->create();
+      }
+
+      $lineItemImporter = new LineItemImporter($this->rowData, $contributionId, $membershipId, $recurContributionId);
+      $lineItemImporter->import();
+
+      $mandateImporter = new DirectDebitMandateImporter($this->rowData, $this->contactId, $recurContributionId, $contributionId);
+      $mandateImporter->import();
+
+      $transaction->commit();
     }
-
-    $lineItemImporter = new LineItemImporter($this->rowData, $contributionId, $membershipId, $recurContributionId);
-    $lineItemImporter->import();
-
-    $mandateImporter = new DirectDebitMandateImporter($this->rowData, $this->contactId, $recurContributionId, $contributionId);
-    $mandateImporter->import();
+    catch (Exception $e) {
+      $transaction->rollback();
+      // we leave for the CSV importer extension to handle any thrown exception.
+      throw $e;
+    }
   }
 
   private function getContactId() {
@@ -45,7 +56,7 @@ class CRM_Membershipextrasimporterapi_CSVRowImporter {
 
     if (!empty($this->rowData['contact_id'])) {
       $sqlQuery = "SELECT id FROM civicrm_contact WHERE id = %1";
-      $result = CRM_Core_DAO::executeQuery($sqlQuery, [1 => [$this->rowData['contact_id'], 'Integer']]);
+      $result = SQLQueryRunner::executeQuery($sqlQuery, [1 => [$this->rowData['contact_id'], 'Integer']]);
       if (!$result->fetch()) {
         throw new CRM_Membershipextrasimporterapi_Exception_InvalidContactException("Cannot find contact with Id = $this->rowData['contact_id']", 100);
       }
@@ -55,7 +66,7 @@ class CRM_Membershipextrasimporterapi_CSVRowImporter {
 
     if (!empty($this->rowData['contact_external_id'])) {
       $sqlQuery = "SELECT id FROM civicrm_contact WHERE external_identifier = %1";
-      $result = CRM_Core_DAO::executeQuery($sqlQuery, [1 => [$this->rowData['contact_external_id'], 'String']]);
+      $result = SQLQueryRunner::executeQuery($sqlQuery, [1 => [$this->rowData['contact_external_id'], 'String']]);
       if (!$result->fetch()) {
         throw new CRM_Membershipextrasimporterapi_Exception_InvalidContactException("Cannot find contact with External Id = $this->rowData['contact_external_id']", 200);
       }
