@@ -532,6 +532,64 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContributionTest exten
     $this->assertEquals(1, $result->is_active);
   }
 
+  public function testImportExistingRecurContributionWillUpdateItCorrectly() {
+    $this->sampleRowData['payment_plan_external_id'] = 'test38';
+
+    $firstImport = new RecurContributionImporter($this->sampleRowData, $this->contactId);
+    $firstRecurContributionId = $firstImport->import();
+
+    $updatedSampleRowData = [
+      'payment_plan_external_id' => 'test38',
+      'payment_plan_payment_processor' => 'Offline Recurring Contribution',
+      'payment_plan_total_amount' => 100,
+      'payment_plan_frequency' => 'year',
+      'payment_plan_next_contribution_date' => '20220101000000',
+      'payment_plan_start_date' => '20210101000000',
+      'payment_plan_create_date' => '20200101000000',
+      'payment_plan_cycle_day' => 30,
+      'payment_plan_auto_renew' => 1,
+      'payment_plan_financial_type' => 'Donation',
+      'payment_plan_payment_method' => 'Cash',
+      'payment_plan_status' => 'Completed',
+      'payment_plan_currency' => 'USD',
+    ];
+    $secondImport = new RecurContributionImporter($updatedSampleRowData, $this->contactId);
+    $secondImport->import();
+
+    $updatedRecurContribution = $this->getRecurContributionsById($firstRecurContributionId);
+
+    $expectedResult = [
+      'total_amount' => '100.00',
+      'frequency_unit' =>  'year',
+      'frequency_interval' => 1,
+      'installments' => 1,
+      'next_contribution_date' => '2022-01-01 00:00:00',
+      'start_date' => '2021-01-01 00:00:00',
+      // cycle day should not be set for Yearly payment plan
+      'cycle_day' => 0,
+      'auto_renew' => 1,
+      'financial_type' => $this->getRecurContributionFinancialTypeId('Donation'),
+      'payment_method' => $this->getRecurContributionPaymentMethodId('Cash'),
+      'status' => $this->getRecurContributionStatusId('Completed'),
+    ];
+
+    $actualResult = [
+      'total_amount' => $updatedRecurContribution['amount'],
+      'frequency_unit' => $updatedRecurContribution['frequency_unit'],
+      'frequency_interval' => (int) $updatedRecurContribution['frequency_interval'],
+      'installments' => (int) $updatedRecurContribution['installments'],
+      'next_contribution_date' => $updatedRecurContribution['next_sched_contribution_date'],
+      'start_date' => $updatedRecurContribution['start_date'],
+      'cycle_day' => (int) $updatedRecurContribution['cycle_day'],
+      'auto_renew' => (int) $updatedRecurContribution['auto_renew'],
+      'financial_type' => $updatedRecurContribution['financial_type_id'],
+      'payment_method' => $updatedRecurContribution['payment_instrument_id'],
+      'status' => $updatedRecurContribution['contribution_status_id'],
+    ];
+
+    $this->assertEquals($expectedResult, $actualResult);
+  }
+
   private function getRecurContributionsByContactId($contactId) {
     $recurContributionIds = NULL;
 
