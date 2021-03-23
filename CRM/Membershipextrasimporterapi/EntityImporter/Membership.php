@@ -25,9 +25,12 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Membership {
     }
 
     // If the membership id is supplied in the CSV as part of the line item entity_id
-    // then we just return it
+    // then we just update the existing membership data
     if (!empty($this->rowData['line_item_entity_id'])) {
-      return $this->rowData['line_item_entity_id'];
+      $membershipId = $this->rowData['line_item_entity_id'];
+      $this->updateExistingMembership($membershipId);
+
+      return $membershipId;
     }
 
     $membershipExternalIdSet = !empty($this->rowData['membership_external_id']);
@@ -37,9 +40,39 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Membership {
 
     $membershipId = $this->getMembershipIdIfExist();
     if ($membershipId) {
-      return $membershipId;
+      $this->updateExistingMembership($membershipId);
+    }
+    else {
+      $membershipId = $this->createNewMembership();
     }
 
+    return $membershipId;
+  }
+
+  private function getMembershipIdIfExist() {
+    $sqlQuery = "SELECT entity_id as id FROM civicrm_value_membership_ext_id WHERE external_id = %1";
+    $membershipId = SQLQueryRunner::executeQuery($sqlQuery, [1 => [$this->rowData['membership_external_id'], 'String']]);
+    $membershipId->fetch();
+
+    if (!empty($membershipId->id)) {
+      return $membershipId->id;
+    }
+
+    return NULL;
+  }
+
+  private function updateExistingMembership($membershipId) {
+    $sqlParams = $this->prepareSqlParams();
+    $sqlParams[11] =  [$membershipId, 'Integer'];
+    $sqlQuery = "UPDATE `civicrm_membership` SET 
+                `contact_id` = %1, `membership_type_id` = %2, `join_date` = %3, `start_date` = %4, `end_date` = %5, 
+                `status_id` = %6, `is_pay_later` = %7, `contribution_recur_id` = %8, `is_override` = %9, 
+                `status_override_end_date` = %10
+                WHERE id = %11";
+    SQLQueryRunner::executeQuery($sqlQuery, $sqlParams);
+  }
+
+  private function createNewMembership() {
     $sqlParams = $this->prepareSqlParams();
     $sqlQuery = "INSERT INTO `civicrm_membership` (`contact_id` , `membership_type_id`, `join_date`, `start_date`, `end_date`, `status_id`,
                  `is_pay_later`, `contribution_recur_id`, `is_override`, `status_override_end_date`) 
@@ -55,18 +88,6 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Membership {
     SQLQueryRunner::executeQuery($sqlQuery, [1 => [$this->rowData['membership_external_id'], 'String']]);
 
     return $membershipId;
-  }
-
-  private function getMembershipIdIfExist() {
-    $sqlQuery = "SELECT entity_id as id FROM civicrm_value_membership_ext_id WHERE external_id = %1";
-    $membershipId = SQLQueryRunner::executeQuery($sqlQuery, [1 => [$this->rowData['membership_external_id'], 'String']]);
-    $membershipId->fetch();
-
-    if (!empty($membershipId->id)) {
-      return $membershipId->id;
-    }
-
-    return NULL;
   }
 
   private function prepareSqlParams() {

@@ -4,6 +4,7 @@ use CRM_Membershipextrasimporterapi_EntityImporter_Membership as MembershipImpor
 use CRM_MembershipExtras_Test_Fabricator_Contact as ContactFabricator;
 use CRM_MembershipExtras_Test_Fabricator_RecurringContribution as RecurContributionFabricator;
 use CRM_MembershipExtras_Test_Fabricator_MembershipType as MembershipTypeFabricator;
+use CRM_MembershipExtras_Test_Fabricator_Membership as MembershipFabricator;
 
 /**
  *
@@ -301,13 +302,62 @@ class CRM_Membershipextrasimporterapi_EntityImporter_MembershipTest extends Base
     $membershipImporter->import();
   }
 
-  public function testImportWithLineItemEntityIdSetWillReturnItInsteadOfCreatingMembership() {
-    $this->sampleRowData['line_item_entity_id'] = 5580;
+  public function testImportWithLineItemEntityIdSetWillUpdateTheMembershipMatchingEntityId() {
+    MembershipTypeFabricator::fabricate(['name' => 'General', 'minimum_fee' => 100]);
+    $testMembership = MembershipFabricator::fabricate([
+      'contact_id' => $this->contactId,
+      'membership_type_id' => 'General',
+    ]);
+    $this->sampleRowData['line_item_entity_id'] = $testMembership['id'];
 
     $membershipImporter = new MembershipImporter($this->sampleRowData, $this->contactId, $this->recurContributionId);
     $membershipId = $membershipImporter->import();
 
     $this->assertEquals($this->sampleRowData['line_item_entity_id'], $membershipId);
+    $updatedMembership = $this->getMembershipById($membershipId);
+    $this->assertEquals($this->getMembershipTypeId('Student'), $updatedMembership['membership_type_id']);
+  }
+
+  public function testImportExistingMembershipWillUpdateItCorrectly() {
+    $this->sampleRowData['membership_external_id'] = 'test21';
+    MembershipTypeFabricator::fabricate(['name' => 'General', 'minimum_fee' => 100]);
+
+    $firstImport = new MembershipImporter($this->sampleRowData, $this->contactId, $this->recurContributionId);
+    $firstMembershipId = $firstImport->import();
+
+    $updatedSampleRowData = [
+      'line_item_entity_table' => 'civicrm_membership',
+      'membership_external_id' => 'test21',
+      'membership_type' => 'General',
+      'membership_join_date' => '20190101000000',
+      'membership_start_date' => '20200101000000',
+      'membership_end_date' => '20201231000000',
+      'membership_status' => 'Pending',
+      'membership_is_status_overridden' => 1,
+    ];
+    $secondImport = new MembershipImporter($updatedSampleRowData, $this->contactId, $this->recurContributionId);
+    $secondImport->import();
+
+    $expectedResult = [
+      'membership_type' => $this->getMembershipTypeId('General'),
+      'join_date' =>  '2019-01-01',
+      'start_date' => '2020-01-01',
+      'end_date' => '2020-12-31',
+      'status' => $this->getMembershipStatusId('Pending'),
+      'is_status_overridden' => 1,
+    ];
+
+    $updatedMembership = $this->getMembershipById($firstMembershipId);
+    $actualResult = [
+      'membership_type' => $updatedMembership['membership_type_id'],
+      'join_date' => $updatedMembership['join_date'],
+      'start_date' =>  $updatedMembership['start_date'],
+      'end_date' => $updatedMembership['end_date'],
+      'status' => $updatedMembership['status_id'],
+      'is_status_overridden' => $updatedMembership['is_override'],
+    ];
+
+    $this->assertEquals($expectedResult, $actualResult);
   }
 
   private function getMembershipsByContactId($contactId) {
