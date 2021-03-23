@@ -27,18 +27,13 @@ class CRM_Membershipextrasimporterapi_EntityImporter_DirectDebitMandate {
     }
 
     $this->validateMandateReference();
+
     $mandateId = $this->getMandateIdIfExist();
-
-    if (empty($mandateId)) {
-      $sqlParams = $this->prepareSqlParams();
-      $sql = "INSERT INTO civicrm_value_dd_mandate 
-            (entity_id, bank_name, account_holder_name, ac_number, sort_code, dd_code, dd_ref, start_date, originator_number) 
-            VALUES (%1, %2, %3, %4, %5, %6, %7, %8, %9)";
-      SQLQueryRunner::executeQuery($sql, $sqlParams);
-
-      $dao = SQLQueryRunner::executeQuery('SELECT LAST_INSERT_ID() as mandate_id');
-      $dao->fetch();
-      $mandateId = $dao->mandate_id;
+    if ($mandateId) {
+      $this->updateMandate($mandateId);
+    }
+    else {
+      $mandateId = $this->createMandate();
     }
 
     if ($this->isRecurContributionAttachedToAnyMandate()) {
@@ -86,6 +81,28 @@ class CRM_Membershipextrasimporterapi_EntityImporter_DirectDebitMandate {
     }
 
     return NULL;
+  }
+
+  private function updateMandate($mandateId) {
+    $sqlParams = $this->prepareSqlParams();
+    $sqlParams[10] = [$mandateId, 'Integer'];
+    $sqlQuery = "UPDATE `civicrm_value_dd_mandate` SET  
+                `entity_id` = %1, `bank_name` = %2, `account_holder_name` = %3, `ac_number` = %4, `sort_code` = %5, 
+                `dd_code` = %6, `dd_ref` = %7, `start_date` = %8, `originator_number` = %9  
+                WHERE id = %10";
+    SQLQueryRunner::executeQuery($sqlQuery, $sqlParams);
+  }
+
+  private function createMandate() {
+    $sqlParams = $this->prepareSqlParams();
+    $sql = "INSERT INTO civicrm_value_dd_mandate 
+            (entity_id, bank_name, account_holder_name, ac_number, sort_code, dd_code, dd_ref, start_date, originator_number) 
+            VALUES (%1, %2, %3, %4, %5, %6, %7, %8, %9)";
+    SQLQueryRunner::executeQuery($sql, $sqlParams);
+
+    $dao = SQLQueryRunner::executeQuery('SELECT LAST_INSERT_ID() as mandate_id');
+    $dao->fetch();
+    return $dao->mandate_id;
   }
 
   private function isRecurContributionAttachedToAnyMandate() {

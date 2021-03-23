@@ -332,6 +332,49 @@ class CRM_Membershipextrasimporterapi_EntityImporter_DirectDebitMandateTest exte
     $this->assertNull($mandates);
   }
 
+  public function testImportExistingMandateWillUpdateItCorrectly() {
+    $firstImport = new DirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
+    $firstMandateId = $firstImport->import();
+
+    $updatedSampleRowData = [
+      'payment_plan_payment_processor' => 'Direct Debit',
+      'contribution_payment_method' => 'direct_debit',
+      'direct_debit_mandate_reference' => 'Civi00001',
+      'direct_debit_mandate_bank_name' => 'Test Bank - Updated',
+      'direct_debit_mandate_account_holder' => 'Test Account Holder - Updated',
+      'direct_debit_mandate_account_number' => '87654321',
+      'direct_debit_mandate_sort_code' => '654321',
+      'direct_debit_mandate_code' => '0N',
+      'direct_debit_mandate_start_date' => '20220101000000',
+      'direct_debit_mandate_originator_number' => 'Test Originator',
+    ];
+    $secondImport = new DirectDebitMandateImporter($updatedSampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
+    $secondImport->import();
+
+    $expectedResult = [
+      'mandate_reference' => 'Civi00001',
+      'bank_name' => 'Test Bank - Updated',
+      'account_holder' => 'Test Account Holder - Updated',
+      'account_number' => '87654321',
+      'sort_code' => '654321',
+      'mandate_code' => 1,
+      'start_date' => '2022-01-01 00:00:00'
+    ];
+
+    $updatedMandate = $this->getMandateById($firstMandateId);
+    $actualResult = [
+      'mandate_reference' => $updatedMandate['dd_ref'],
+      'bank_name' => $updatedMandate['bank_name'],
+      'account_holder' => $updatedMandate['account_holder_name'],
+      'account_number' => $updatedMandate['ac_number'],
+      'sort_code' => $updatedMandate['sort_code'],
+      'mandate_code' => $updatedMandate['dd_code'],
+      'start_date' => $updatedMandate['start_date'],
+    ];
+
+    $this->assertEquals($expectedResult, $actualResult);
+  }
+
   private function getMandateIdByReference($mandateReference) {
     $sql = "SELECT id FROM civicrm_value_dd_mandate WHERE dd_ref = %1";
     $dao = CRM_Core_DAO::executeQuery($sql, [

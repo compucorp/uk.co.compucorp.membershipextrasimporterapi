@@ -53,7 +53,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_MembershipTest extends Base
   }
 
   public function testImportExistingMembershipWillNotCreateNewOne() {
-    $this->sampleRowData['payment_plan_external_id'] = 'test2';
+    $this->sampleRowData['membership_external_id'] = 'test2';
 
     $firstImport = new MembershipImporter($this->sampleRowData, $this->contactId, $this->recurContributionId);
     $firstMembershipId = $firstImport->import();
