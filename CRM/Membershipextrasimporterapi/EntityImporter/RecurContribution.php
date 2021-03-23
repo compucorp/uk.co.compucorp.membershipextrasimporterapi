@@ -21,13 +21,34 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContribution {
   }
 
   public function import() {
-    $recurContributionId = $this->getRecurContributionIdIfExist();
-    if ($recurContributionId) {
-      return $recurContributionId;
-    }
-
     $this->validateIfDirectDebitPaymentPlan();
 
+    $recurContributionId = $this->getRecurContributionIdIfExist();
+    if ($recurContributionId) {
+      $this->updateExistingRecurContribution($recurContributionId);
+    }
+    else {
+      $recurContributionId = $this->createNewRecurContribution();
+    }
+
+    $this->setActiveStatus($recurContributionId);
+
+    return $recurContributionId;
+  }
+
+  private function updateExistingRecurContribution($recurContributionId) {
+    $sqlParams = $this->prepareSqlParams();
+    $sqlParams[16] = [$recurContributionId, 'Integer'];
+    $sqlQuery = "UPDATE `civicrm_contribution_recur` SET 
+                `contact_id` = %1, `amount` = %2, `currency` = %3, `frequency_unit` = %4, `frequency_interval` = %5, 
+                `installments` = %6, `start_date` = %7, `contribution_status_id` = %8, `payment_processor_id` = %9, 
+                `financial_type_id` = %10, `payment_instrument_id` = %11, `auto_renew` = %12, `create_date` = %13,
+                `next_sched_contribution_date` = %14, `cycle_day` = %15
+                WHERE id = %16";
+    SQLQueryRunner::executeQuery($sqlQuery, $sqlParams);
+  }
+
+  private function createNewRecurContribution() {
     $sqlParams = $this->prepareSqlParams();
     $sqlQuery = "INSERT INTO `civicrm_contribution_recur` (`contact_id` , `amount` , `currency` , `frequency_unit` , `frequency_interval` , `installments` ,
             `start_date`, `contribution_status_id`, `payment_processor_id` , `financial_type_id` , `payment_instrument_id`, `auto_renew`, `create_date`,
@@ -38,8 +59,6 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContribution {
     $dao = SQLQueryRunner::executeQuery('SELECT LAST_INSERT_ID() as recur_contribution_id');
     $dao->fetch();
     $recurContributionId = $dao->recur_contribution_id;
-
-    $this->setActiveStatus($recurContributionId);
 
     $sqlQuery = "INSERT INTO `civicrm_value_contribution_recur_ext_id` (`entity_id` , `external_id`) 
            VALUES ({$recurContributionId}, %1)";
