@@ -63,7 +63,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Membership {
 
   private function updateExistingMembership($membershipId) {
     $sqlParams = $this->prepareSqlParams();
-    $sqlParams[11] =  [$membershipId, 'Integer'];
+    $sqlParams[11] = [$membershipId, 'Integer'];
     $sqlQuery = "UPDATE `civicrm_membership` SET 
                 `contact_id` = %1, `membership_type_id` = %2, `join_date` = %3, `start_date` = %4, `end_date` = %5, 
                 `status_id` = %6, `is_pay_later` = %7, `contribution_recur_id` = %8, `is_override` = %9, 

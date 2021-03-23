@@ -358,7 +358,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_DirectDebitMandateTest exte
       'account_number' => '87654321',
       'sort_code' => '654321',
       'mandate_code' => 1,
-      'start_date' => '2022-01-01 00:00:00'
+      'start_date' => '2022-01-01 00:00:00',
     ];
 
     $updatedMandate = $this->getMandateById($firstMandateId);

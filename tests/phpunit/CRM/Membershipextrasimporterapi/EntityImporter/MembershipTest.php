@@ -340,7 +340,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_MembershipTest extends Base
 
     $expectedResult = [
       'membership_type' => $this->getMembershipTypeId('General'),
-      'join_date' =>  '2019-01-01',
+      'join_date' => '2019-01-01',
       'start_date' => '2020-01-01',
       'end_date' => '2020-12-31',
       'status' => $this->getMembershipStatusId('Pending'),
@@ -351,7 +351,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_MembershipTest extends Base
     $actualResult = [
       'membership_type' => $updatedMembership['membership_type_id'],
       'join_date' => $updatedMembership['join_date'],
-      'start_date' =>  $updatedMembership['start_date'],
+      'start_date' => $updatedMembership['start_date'],
       'end_date' => $updatedMembership['end_date'],
       'status' => $updatedMembership['status_id'],
       'is_status_overridden' => $updatedMembership['is_override'],

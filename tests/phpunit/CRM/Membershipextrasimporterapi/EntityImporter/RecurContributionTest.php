@@ -560,7 +560,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContributionTest exten
 
     $expectedResult = [
       'total_amount' => '100.00',
-      'frequency_unit' =>  'year',
+      'frequency_unit' => 'year',
       'frequency_interval' => 1,
       'installments' => 1,
       'next_contribution_date' => '2022-01-01 00:00:00',

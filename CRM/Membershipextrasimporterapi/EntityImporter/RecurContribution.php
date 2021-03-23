@@ -38,7 +38,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContribution {
 
   private function updateExistingRecurContribution($recurContributionId) {
     $sqlParams = $this->prepareSqlParams();
-    $sqlParams[16] =  [$recurContributionId, 'Integer'];
+    $sqlParams[16] = [$recurContributionId, 'Integer'];
     $sqlQuery = "UPDATE `civicrm_contribution_recur` SET 
                 `contact_id` = %1, `amount` = %2, `currency` = %3, `frequency_unit` = %4, `frequency_interval` = %5, 
                 `installments` = %6, `start_date` = %7, `contribution_status_id` = %8, `payment_processor_id` = %9, 
