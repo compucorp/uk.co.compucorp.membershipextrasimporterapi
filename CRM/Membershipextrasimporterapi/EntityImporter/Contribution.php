@@ -201,15 +201,24 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Contribution {
   }
 
   private function createFinancialTransactionRecord($mappedContributionParams) {
+    $isPayment = 0;
+    if (!$mappedContributionParams['is_pay_later']) {
+      $isPayment = 1;
+    }
+
     $sqlParams = [
       1 => [$this->getToFinancialAccountId(), 'Integer'],
       2 => [$mappedContributionParams['total_amount'], 'Money'],
       3 => [$mappedContributionParams['currency'], 'String'],
       4 => [$mappedContributionParams['contribution_status_id'], 'Integer'],
       5 => [$mappedContributionParams['payment_method_id'], 'Integer'],
+      6 => [$mappedContributionParams['receive_date'], 'String'],
+      7 => [$mappedContributionParams['total_amount'], 'Money'],
+      8 => [$isPayment, 'Integer'],
     ];
-    $sqlQuery = "INSERT INTO `civicrm_financial_trxn` (`to_financial_account_id`, `total_amount` , `currency`, `status_id` , `payment_instrument_id`) 
-            VALUES (%1 , %2, %3, %4, %5)";
+    $sqlQuery = "INSERT INTO `civicrm_financial_trxn` (`to_financial_account_id`, `total_amount` , `currency`, `status_id` , `payment_instrument_id`,
+                `trxn_date`, `net_amount`, `is_payment`) 
+            VALUES (%1 , %2, %3, %4, %5, %6, %7, %8)";
     SQLQueryRunner::executeQuery($sqlQuery, $sqlParams);
 
     $dao = SQLQueryRunner::executeQuery('SELECT LAST_INSERT_ID() as id');
@@ -224,7 +233,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Contribution {
    * for the import, we are using it to get to
    * get the financial account value.
    *
-   * @return id
+   * @return int
    */
   private function getToFinancialAccountId() {
     $paymentProcessorId = $this->getPaymentProcessorIdFromRecurContribution();

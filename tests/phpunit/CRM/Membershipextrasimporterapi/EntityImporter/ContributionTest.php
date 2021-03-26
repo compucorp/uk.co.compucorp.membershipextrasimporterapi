@@ -224,25 +224,46 @@ class CRM_Membershipextrasimporterapi_EntityImporter_ContributionTest extends Ba
   }
 
   public function testImportWillCreateCorrectFinancialTransactionRecords() {
-    $this->sampleRowData['membership_external_id'] = 'test16';
+    $this->sampleRowData['contribution_external_id'] = 'test16';
 
     $contributionImporter = new ContributionImporter($this->sampleRowData, $this->contactId, $this->recurContributionId);
     $newContributionId = $contributionImporter->import();
     $newContribution = $this->getContributionById($newContributionId);
 
-    $sqlQuery = "SELECT ceft.amount as ef_amount, cft.total_amount as f_amount, cft.currency, cft.status_id, cft.payment_instrument_id, cft.to_financial_account_id  
-                 FROM civicrm_entity_financial_trxn ceft
-                 INNER JOIN civicrm_financial_trxn cft ON ceft.financial_trxn_id = cft.id 
-                 WHERE ceft.entity_table = 'civicrm_contribution' AND ceft.entity_id = {$newContributionId}";
-    $result = CRM_Core_DAO::executeQuery($sqlQuery);
-    $result->fetch();
+    $contributionFinancialTrxn = $this->getContributionFinancialTransaction($newContributionId);
 
-    $this->assertEquals($newContribution['total_amount'], $result->ef_amount);
-    $this->assertEquals($newContribution['total_amount'], $result->f_amount);
-    $this->assertEquals($newContribution['currency'], $result->currency);
-    $this->assertEquals($newContribution['contribution_status_id'], $result->status_id);
-    $this->assertEquals($newContribution['payment_instrument_id'], $result->payment_instrument_id);
-    $this->assertEquals($this->getPaymentProcessorFinancialAccountId($this->testPaymentProcessorId), $result->to_financial_account_id);
+    $this->assertEquals($newContribution['total_amount'], $contributionFinancialTrxn->ef_amount);
+    $this->assertEquals($newContribution['total_amount'], $contributionFinancialTrxn->f_amount);
+    $this->assertEquals($newContribution['total_amount'], $contributionFinancialTrxn->f_net_amount);
+    $this->assertEquals($newContribution['receive_date'], $contributionFinancialTrxn->f_trxn_date);
+    $this->assertEquals($newContribution['currency'], $contributionFinancialTrxn->currency);
+    $this->assertEquals($newContribution['contribution_status_id'], $contributionFinancialTrxn->status_id);
+    $this->assertEquals($newContribution['payment_instrument_id'], $contributionFinancialTrxn->payment_instrument_id);
+    $this->assertEquals($this->getPaymentProcessorFinancialAccountId($this->testPaymentProcessorId), $contributionFinancialTrxn->to_financial_account_id);
+  }
+
+  public function testImportPendingContributionWillCreateUnpaidTransaction() {
+    $this->sampleRowData['contribution_external_id'] = 'test20';
+    $this->sampleRowData['contribution_status'] = 'Pending';
+    
+    $contributionImporter = new ContributionImporter($this->sampleRowData, $this->contactId, $this->recurContributionId);
+    $newContributionId = $contributionImporter->import();
+
+    $contributionFinancialTrxn = $this->getContributionFinancialTransaction($newContributionId);
+
+    $this->assertEquals(0, $contributionFinancialTrxn->f_is_payment);
+  }
+
+  public function testImportCompletedContributionWillCreatePaidTransaction() {
+    $this->sampleRowData['contribution_external_id'] = 'test21';
+    $this->sampleRowData['contribution_status'] = 'Completed';
+
+    $contributionImporter = new ContributionImporter($this->sampleRowData, $this->contactId, $this->recurContributionId);
+    $newContributionId = $contributionImporter->import();
+
+    $contributionFinancialTrxn = $this->getContributionFinancialTransaction($newContributionId);
+
+    $this->assertEquals(1, $contributionFinancialTrxn->f_is_payment);
   }
 
   public function testImportWithInvalidCurrencyThrowAnException() {
@@ -330,6 +351,18 @@ class CRM_Membershipextrasimporterapi_EntityImporter_ContributionTest extends Ba
     $result = CRM_Core_DAO::executeQuery($sqlQuery);
     $result->fetch();
     return $result->financial_account_id;
+  }
+
+  private function getContributionFinancialTransaction($contributionId) {
+    $sqlQuery = "SELECT ceft.amount as ef_amount, cft.total_amount as f_amount, cft.currency, cft.status_id, cft.payment_instrument_id, cft.to_financial_account_id,
+                 cft.trxn_date as f_trxn_date, cft.net_amount as f_net_amount, cft.is_payment as f_is_payment  
+                 FROM civicrm_entity_financial_trxn ceft
+                 INNER JOIN civicrm_financial_trxn cft ON ceft.financial_trxn_id = cft.id 
+                 WHERE ceft.entity_table = 'civicrm_contribution' AND ceft.entity_id = {$contributionId}";
+    $result = CRM_Core_DAO::executeQuery($sqlQuery);
+    $result->fetch();
+
+    return $result;
   }
 
 }
