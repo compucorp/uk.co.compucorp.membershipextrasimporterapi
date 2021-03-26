@@ -178,6 +178,11 @@ function _civicrm_api3_membershipextras_importer_create_spec(&$params) {
     'type' => CRM_Utils_Type::T_STRING,
   ];
 
+  $params['contribution_invoice_number'] = [
+    'title' => 'Contribution Invoice Number',
+    'type' => CRM_Utils_Type::T_STRING,
+  ];
+
   // Line Item
   $params['line_item_entity_table'] = [
     'title' => 'Order Line Entity Type',

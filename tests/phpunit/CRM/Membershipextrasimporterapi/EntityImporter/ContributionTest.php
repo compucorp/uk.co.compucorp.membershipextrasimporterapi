@@ -245,7 +245,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_ContributionTest extends Ba
   public function testImportPendingContributionWillCreateUnpaidTransaction() {
     $this->sampleRowData['contribution_external_id'] = 'test20';
     $this->sampleRowData['contribution_status'] = 'Pending';
-    
+
     $contributionImporter = new ContributionImporter($this->sampleRowData, $this->contactId, $this->recurContributionId);
     $newContributionId = $contributionImporter->import();
 
@@ -298,6 +298,51 @@ class CRM_Membershipextrasimporterapi_EntityImporter_ContributionTest extends Ba
     $newContribution = $this->getContributionById($newContributionId);
 
     $this->assertEquals($this->sampleRowData['contribution_currency'], $newContribution['currency']);
+  }
+
+  public function testImportSetsCorrectInvoiceNumberIfItsProvided() {
+    $this->sampleRowData['contribution_external_id'] = 'test19';
+    $this->sampleRowData['contribution_invoice_number'] = 'RANDOM1234';
+
+    $contributionImporter = new ContributionImporter($this->sampleRowData, $this->contactId, $this->recurContributionId);
+    $newContributionId = $contributionImporter->import();
+
+    $newContribution = $this->getContributionById($newContributionId);
+
+    $this->assertEquals($this->sampleRowData['contribution_invoice_number'], $newContribution['invoice_number']);
+  }
+
+  public function testImportWillNotSetsInvoiceNumberIfInvoicingIsDisabledAndItsNotProvided() {
+    $this->sampleRowData['contribution_external_id'] = 'test22';
+
+    civicrm_api3('Setting', 'create', [
+      'invoicing' => 0,
+    ]);
+
+    $contributionImporter = new ContributionImporter($this->sampleRowData, $this->contactId, $this->recurContributionId);
+    $newContributionId = $contributionImporter->import();
+
+    $newContribution = $this->getContributionById($newContributionId);
+
+    $this->assertEquals('', $newContribution['invoice_number']);
+  }
+
+  public function testImportSetsInvoiceNumberCorrectlyIfInvoicingIsEnabledAndItsNotProvided() {
+    $this->sampleRowData['contribution_external_id'] = 'test23';
+
+    civicrm_api3('Setting', 'create', [
+      'invoicing' => 1,
+    ]);
+
+    $nextContributionID = CRM_Core_DAO::singleValueQuery('SELECT COALESCE(MAX(id) + 1, 1) FROM civicrm_contribution');
+    $expectedInvoiceNumber = CRM_Contribute_BAO_Contribution::getInvoiceNumber($nextContributionID);
+
+    $contributionImporter = new ContributionImporter($this->sampleRowData, $this->contactId, $this->recurContributionId);
+    $newContributionId = $contributionImporter->import();
+
+    $newContribution = $this->getContributionById($newContributionId);
+
+    $this->assertEquals($expectedInvoiceNumber, $newContribution['invoice_number']);
   }
 
   private function getContributionsByContactId($contactId) {

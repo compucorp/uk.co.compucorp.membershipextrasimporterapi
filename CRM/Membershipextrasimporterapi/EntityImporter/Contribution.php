@@ -27,8 +27,8 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Contribution {
     $sqlParams = $this->prepareSqlParams();
     $sqlQuery = "INSERT INTO `civicrm_contribution` (`contact_id` , `financial_type_id` , `payment_instrument_id` , 
                  `receive_date` , `total_amount` , `currency`, `contribution_recur_id` , `is_pay_later`,
-                  `contribution_status_id`) 
-                 VALUES (%1, %2, %3, %4, %5, %6, %7, %8, %9)";
+                  `contribution_status_id`, `invoice_number`) 
+                 VALUES (%1, %2, %3, %4, %5, %6, %7, %8, %9, %10)";
     SQLQueryRunner::executeQuery($sqlQuery, $sqlParams);
 
     $dao = SQLQueryRunner::executeQuery('SELECT LAST_INSERT_ID() as contribution_id');
@@ -66,6 +66,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Contribution {
     $currency = $this->getCurrency();
     $isPayLater = $this->calculateIsPayLaterFlag();
     $contributionStatusId  = $this->getContributionStatusId();
+    $invoiceNumber = $this->calculateInvoiceNumber();
 
     return [
       1 => [$this->contactId, 'Integer'],
@@ -77,6 +78,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Contribution {
       7 => [$this->recurContributionId, 'Integer'],
       8 => [$isPayLater, 'Integer'],
       9 => [$contributionStatusId, 'Integer'],
+      10 => [$invoiceNumber, 'String']
     ];
   }
 
@@ -91,6 +93,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Contribution {
       'recur_contribution_id' => $contributionSqlParams[7][0],
       'is_pay_later' => $contributionSqlParams[8][0],
       'contribution_status_id' => $contributionSqlParams[9][0],
+      'invoice_number' => $contributionSqlParams[10][0],
     ];
   }
 
@@ -198,6 +201,26 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Contribution {
     }
 
     throw new CRM_Membershipextrasimporterapi_Exception_InvalidContributionFieldException('Invalid contribution "Status"', 300);
+  }
+
+  /**
+   * Calculates the invoice number
+   * in similar fashion to how CiviCRM
+   * does it.
+   *
+   * @return string
+   */
+  private function calculateInvoiceNumber() {
+    if (!empty($this->rowData['contribution_invoice_number'])) {
+      return $this->rowData['contribution_invoice_number'];
+    }
+
+    if (CRM_Invoicing_Utils::isInvoicingEnabled()) {
+      $nextContributionID = CRM_Core_DAO::singleValueQuery('SELECT COALESCE(MAX(id) + 1, 1) FROM civicrm_contribution');
+      return CRM_Contribute_BAO_Contribution::getInvoiceNumber($nextContributionID);
+    }
+
+    return '';
   }
 
   private function createFinancialTransactionRecord($mappedContributionParams) {
