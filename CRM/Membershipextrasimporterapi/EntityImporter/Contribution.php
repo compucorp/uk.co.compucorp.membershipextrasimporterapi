@@ -27,8 +27,8 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Contribution {
     $sqlParams = $this->prepareSqlParams();
     $sqlQuery = "INSERT INTO `civicrm_contribution` (`contact_id` , `financial_type_id` , `payment_instrument_id` , 
                  `receive_date` , `total_amount` , `currency`, `contribution_recur_id` , `is_pay_later`,
-                  `contribution_status_id`, `invoice_number`) 
-                 VALUES (%1, %2, %3, %4, %5, %6, %7, %8, %9, %10)";
+                  `contribution_status_id`, `invoice_number`, `source`) 
+                 VALUES (%1, %2, %3, %4, %5, %6, %7, %8, %9, %10, %11)";
     SQLQueryRunner::executeQuery($sqlQuery, $sqlParams);
 
     $dao = SQLQueryRunner::executeQuery('SELECT LAST_INSERT_ID() as contribution_id');
@@ -78,7 +78,8 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Contribution {
       7 => [$this->recurContributionId, 'Integer'],
       8 => [$isPayLater, 'Integer'],
       9 => [$contributionStatusId, 'Integer'],
-      10 => [$invoiceNumber, 'String']
+      10 => [$invoiceNumber, 'String'],
+      11 => ['Membershipextras Importer at: ' . date('Y-m-d H:i'), 'String'],
     ];
   }
 
