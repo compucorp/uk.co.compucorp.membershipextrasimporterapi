@@ -504,7 +504,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItem {
   private function updateRelatedContributionAmounts($lineItemTotalAmount, $taxAmount) {
     $totalAmount = $lineItemTotalAmount + $taxAmount;
 
-    $amountFieldOperation = '`total_amount` = `total_amount` + %1';
+    $amountFieldOperation = '`total_amount` = `total_amount` + %1, `net_amount` = `net_amount` + %1';
     $sqlParams[1] = [$totalAmount, 'Money'];
 
     if (!empty($taxAmount)) {
@@ -517,8 +517,8 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItem {
 
     $trxSqlParams[1] = [$totalAmount, 'Money'];
     $sqlQuery = "UPDATE `civicrm_entity_financial_trxn` ceft 
-                 INNER JOIN civicrm_financial_trxn cft ON ceft.financial_trxn_id = cft.id      
-                 SET ceft.amount = ceft.amount + %1, cft.total_amount = cft.total_amount + %1
+                 INNER JOIN civicrm_financial_trxn cft ON ceft.financial_trxn_id = cft.id 
+                 SET ceft.amount = ceft.amount + %1, cft.total_amount = cft.total_amount + %1, cft.net_amount = cft.net_amount + %1 
                  WHERE ceft.entity_table = 'civicrm_contribution' AND ceft.entity_id = {$this->contributionId}";
     SQLQueryRunner::executeQuery($sqlQuery, $trxSqlParams);
   }
