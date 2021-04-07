@@ -322,6 +322,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItemTest extends BaseHe
     $contribution = $this->getContributionById($this->contributionId);
 
     $this->assertEquals(80.5, $contribution['total_amount']);
+    $this->assertEquals(80.5, $contribution['net_amount']);
   }
 
   public function testImportWillUpdateContributionRelatedFinancialRecordsAmountsToBeSameAsTheContribution() {
@@ -342,6 +343,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItemTest extends BaseHe
 
     $this->assertEquals(80.5, $entityFinancialTrxn['amount']);
     $this->assertEquals(80.5, $financialTrxn['total_amount']);
+    $this->assertEquals(80.5, $financialTrxn['net_amount']);
   }
 
   public function testImportWithTaxWillUpdateContributionAmountToTheSumOfLineItemsAmountsAndTaxes() {
@@ -364,6 +366,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItemTest extends BaseHe
     $contribution = $this->getContributionById($this->contributionId);
 
     $this->assertEquals(95.83, $contribution['total_amount']);
+    $this->assertEquals(95.83, $contribution['net_amount']);
   }
 
   public function testImportWithTaxWillUpdateContributionRelatedFinancialRecordsAmountsToBeSameAsTheContribution() {
@@ -388,6 +391,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItemTest extends BaseHe
 
     $this->assertEquals(95.83, $entityFinancialTrxn['amount']);
     $this->assertEquals(95.83, $financialTrxn['total_amount']);
+    $this->assertEquals(95.83, $financialTrxn['net_amount']);
   }
 
   public function testImportWithTaxWillUpdateContributionTaxAmountToTheSumOfLineItemsTaxAmounts() {

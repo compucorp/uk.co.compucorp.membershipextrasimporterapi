@@ -74,9 +74,10 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Membership {
 
   private function createNewMembership() {
     $sqlParams = $this->prepareSqlParams();
+    $sqlParams[11] = ['Membershipextras Importer at: ' . date('Y-m-d H:i') , 'String'];
     $sqlQuery = "INSERT INTO `civicrm_membership` (`contact_id` , `membership_type_id`, `join_date`, `start_date`, `end_date`, `status_id`,
-                 `is_pay_later`, `contribution_recur_id`, `is_override`, `status_override_end_date`) 
-            VALUES (%1, %2, %3, %4, %5, %6, %7, %8, %9, %10)";
+                 `is_pay_later`, `contribution_recur_id`, `is_override`, `status_override_end_date`, `source`) 
+            VALUES (%1, %2, %3, %4, %5, %6, %7, %8, %9, %10, %11)";
     SQLQueryRunner::executeQuery($sqlQuery, $sqlParams);
 
     $dao = SQLQueryRunner::executeQuery('SELECT LAST_INSERT_ID() as membership_id');

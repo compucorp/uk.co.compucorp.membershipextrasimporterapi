@@ -27,8 +27,8 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Contribution {
     $sqlParams = $this->prepareSqlParams();
     $sqlQuery = "INSERT INTO `civicrm_contribution` (`contact_id` , `financial_type_id` , `payment_instrument_id` , 
                  `receive_date` , `total_amount` , `currency`, `contribution_recur_id` , `is_pay_later`,
-                  `contribution_status_id`) 
-                 VALUES (%1, %2, %3, %4, %5, %6, %7, %8, %9)";
+                  `contribution_status_id`, `invoice_number`, `source`) 
+                 VALUES (%1, %2, %3, %4, %5, %6, %7, %8, %9, %10, %11)";
     SQLQueryRunner::executeQuery($sqlQuery, $sqlParams);
 
     $dao = SQLQueryRunner::executeQuery('SELECT LAST_INSERT_ID() as contribution_id');
@@ -66,6 +66,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Contribution {
     $currency = $this->getCurrency();
     $isPayLater = $this->calculateIsPayLaterFlag();
     $contributionStatusId  = $this->getContributionStatusId();
+    $invoiceNumber = $this->calculateInvoiceNumber();
 
     return [
       1 => [$this->contactId, 'Integer'],
@@ -77,6 +78,8 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Contribution {
       7 => [$this->recurContributionId, 'Integer'],
       8 => [$isPayLater, 'Integer'],
       9 => [$contributionStatusId, 'Integer'],
+      10 => [$invoiceNumber, 'String'],
+      11 => ['Membershipextras Importer at: ' . date('Y-m-d H:i'), 'String'],
     ];
   }
 
@@ -91,6 +94,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Contribution {
       'recur_contribution_id' => $contributionSqlParams[7][0],
       'is_pay_later' => $contributionSqlParams[8][0],
       'contribution_status_id' => $contributionSqlParams[9][0],
+      'invoice_number' => $contributionSqlParams[10][0],
     ];
   }
 
@@ -200,16 +204,45 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Contribution {
     throw new CRM_Membershipextrasimporterapi_Exception_InvalidContributionFieldException('Invalid contribution "Status"', 300);
   }
 
+  /**
+   * Calculates the invoice number
+   * in similar fashion to how CiviCRM
+   * does it.
+   *
+   * @return string
+   */
+  private function calculateInvoiceNumber() {
+    if (!empty($this->rowData['contribution_invoice_number'])) {
+      return $this->rowData['contribution_invoice_number'];
+    }
+
+    if (CRM_Invoicing_Utils::isInvoicingEnabled()) {
+      $nextContributionID = CRM_Core_DAO::singleValueQuery('SELECT COALESCE(MAX(id) + 1, 1) FROM civicrm_contribution');
+      return CRM_Contribute_BAO_Contribution::getInvoiceNumber($nextContributionID);
+    }
+
+    return '';
+  }
+
   private function createFinancialTransactionRecord($mappedContributionParams) {
+    $isPayment = 0;
+    if (!$mappedContributionParams['is_pay_later']) {
+      $isPayment = 1;
+    }
+
     $sqlParams = [
       1 => [$this->getToFinancialAccountId(), 'Integer'],
       2 => [$mappedContributionParams['total_amount'], 'Money'],
       3 => [$mappedContributionParams['currency'], 'String'],
       4 => [$mappedContributionParams['contribution_status_id'], 'Integer'],
       5 => [$mappedContributionParams['payment_method_id'], 'Integer'],
+      6 => [$mappedContributionParams['receive_date'], 'String'],
+      7 => [$mappedContributionParams['total_amount'], 'Money'],
+      8 => [$isPayment, 'Integer'],
     ];
-    $sqlQuery = "INSERT INTO `civicrm_financial_trxn` (`to_financial_account_id`, `total_amount` , `currency`, `status_id` , `payment_instrument_id`) 
-            VALUES (%1 , %2, %3, %4, %5)";
+    $sqlQuery = "INSERT INTO `civicrm_financial_trxn` (`to_financial_account_id`, `total_amount` , `currency`, `status_id` , `payment_instrument_id`,
+                `trxn_date`, `net_amount`, `is_payment`) 
+            VALUES (%1 , %2, %3, %4, %5, %6, %7, %8)";
     SQLQueryRunner::executeQuery($sqlQuery, $sqlParams);
 
     $dao = SQLQueryRunner::executeQuery('SELECT LAST_INSERT_ID() as id');
@@ -224,7 +257,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Contribution {
    * for the import, we are using it to get to
    * get the financial account value.
    *
-   * @return id
+   * @return int
    */
   private function getToFinancialAccountId() {
     $paymentProcessorId = $this->getPaymentProcessorIdFromRecurContribution();
