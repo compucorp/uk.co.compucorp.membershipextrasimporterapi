@@ -28,6 +28,7 @@ class CRM_Membershipextrasimporterapi_Helper_SQLQueryRunner {
       $errorMessage = $exception->getMessage();
       $errorMessage .= " | Failed executing the following SQL Query: '$sqlQuery'.";
       $errorMessage .= ' - With the following data: ' . print_r($sqlParams, TRUE);
+      $errorMessage = str_replace("\n", ' ', $errorMessage);
       throw new CRM_Core_Exception($errorMessage);
     }
   }
