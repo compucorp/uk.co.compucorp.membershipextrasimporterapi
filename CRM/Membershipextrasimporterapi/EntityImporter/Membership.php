@@ -141,7 +141,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Membership {
         $this->rowData['membership_start_date'],
         $this->rowData['membership_end_date'],
         $this->rowData['membership_join_date'],
-        'today',
+        'now',
         TRUE,
         $membershipTypeId
       );
