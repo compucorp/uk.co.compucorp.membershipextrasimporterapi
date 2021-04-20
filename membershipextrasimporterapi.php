@@ -39,6 +39,19 @@ function membershipextrasimporterapi_civicrm_install() {
  */
 function membershipextrasimporterapi_civicrm_postInstall() {
   _membershipextrasimporterapi_civix_civicrm_postInstall();
+
+  _membershipextrasimporterapi_increaseQueueDataFieldSize();
+}
+
+/**
+ * CiviCRM civicrm_queue_item.data field is the one that holds the data
+ * for the batch of rows we are going to import, but if the data contains
+ * large text or if the batch size is big then the current field size (which is of type Text)
+ * is not enough. So here we increase it to `LONGTEXT`.
+ */
+function _membershipextrasimporterapi_increaseQueueDataFieldSize() {
+  $query = 'ALTER TABLE `civicrm_queue_item` MODIFY `data` LONGTEXT';
+  CRM_Core_DAO::executeQuery($query);
 }
 
 /**
