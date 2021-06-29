@@ -31,7 +31,7 @@ class CRM_Membershipextrasimporterapi_CSVRowImporter {
       $contributionImporter = new ContributionImporter($this->rowData, $this->contactId, $recurContributionId);
       $contributionId = $contributionImporter->import();
 
-      if ($membershipId == NULL) {
+      if ($membershipId != NULL) {
         $membershipPaymentCreator = new MembershipPaymentCreator($membershipId, $contributionId);
         $membershipPaymentCreator->create();
       }
