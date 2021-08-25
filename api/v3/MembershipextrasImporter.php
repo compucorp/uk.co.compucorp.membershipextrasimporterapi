@@ -36,11 +36,6 @@ function _civicrm_api3_membershipextras_importer_create_spec(&$params) {
     'api.required' => 1,
   ];
 
-  $params['payment_plan_total_amount'] = [
-    'title' => 'Payment Plan Total Amount',
-    'type' => CRM_Utils_Type::T_MONEY,
-  ];
-
   $params['payment_plan_currency'] = [
     'title' => 'Payment Plan Currency',
     'type' => CRM_Utils_Type::T_STRING,

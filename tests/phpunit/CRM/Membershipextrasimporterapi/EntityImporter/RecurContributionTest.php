@@ -11,7 +11,6 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContributionTest exten
   private $sampleRowData = [
     'payment_plan_external_id' => 'test1',
     'payment_plan_payment_processor' => 'Offline Recurring Contribution',
-    'payment_plan_total_amount' => 50,
     'payment_plan_frequency' => 'month',
     'payment_plan_next_contribution_date' => '20210101000000',
     'payment_plan_start_date' => '20200101000000',
@@ -69,16 +68,6 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContributionTest exten
     $recurContributionId->fetch();
 
     $this->assertEquals(1, $recurContributionId->N);
-  }
-
-  public function testImportWillSetCorrectAmountValue() {
-    $this->sampleRowData['payment_plan_external_id'] = 'test4';
-
-    $recurContributionImporter = new RecurContributionImporter($this->sampleRowData, $this->contactId);
-    $newRecurContributionId = $recurContributionImporter->import();
-
-    $newRecurContribution = $this->getRecurContributionsById($newRecurContributionId);
-    $this->assertEquals($this->sampleRowData['payment_plan_total_amount'], $newRecurContribution['amount']);
   }
 
   public function testImportMonthlyRecurContributionWillSetCorrectFrequencyInformation() {
@@ -541,7 +530,6 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContributionTest exten
     $updatedSampleRowData = [
       'payment_plan_external_id' => 'test38',
       'payment_plan_payment_processor' => 'Offline Recurring Contribution',
-      'payment_plan_total_amount' => 100,
       'payment_plan_frequency' => 'year',
       'payment_plan_next_contribution_date' => '20220101000000',
       'payment_plan_start_date' => '20210101000000',
@@ -559,7 +547,6 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContributionTest exten
     $updatedRecurContribution = $this->getRecurContributionsById($firstRecurContributionId);
 
     $expectedResult = [
-      'total_amount' => '100.00',
       'frequency_unit' => 'year',
       'frequency_interval' => 1,
       'installments' => 1,
@@ -574,7 +561,6 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContributionTest exten
     ];
 
     $actualResult = [
-      'total_amount' => $updatedRecurContribution['amount'],
       'frequency_unit' => $updatedRecurContribution['frequency_unit'],
       'frequency_interval' => (int) $updatedRecurContribution['frequency_interval'],
       'installments' => (int) $updatedRecurContribution['installments'],
@@ -613,8 +599,8 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContributionTest exten
   }
 
   private function getRecurContributionStatusId($statusName) {
-    $sqlQuery = "SELECT cov.value as id FROM civicrm_option_value cov 
-                  INNER JOIN civicrm_option_group cog ON cov.option_group_id = cog.id 
+    $sqlQuery = "SELECT cov.value as id FROM civicrm_option_value cov
+                  INNER JOIN civicrm_option_group cog ON cov.option_group_id = cog.id
                   WHERE cog.name = 'contribution_recur_status' AND cov.name = %1";
     $result = CRM_Core_DAO::executeQuery($sqlQuery, [1 => [$statusName, 'String']]);
     $result->fetch();
@@ -636,8 +622,8 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContributionTest exten
   }
 
   private function getRecurContributionPaymentMethodId($pmName) {
-    $sqlQuery = "SELECT cov.value as id FROM civicrm_option_value cov 
-                  INNER JOIN civicrm_option_group cog ON cov.option_group_id = cog.id 
+    $sqlQuery = "SELECT cov.value as id FROM civicrm_option_value cov
+                  INNER JOIN civicrm_option_group cog ON cov.option_group_id = cog.id
                   WHERE cog.name = 'payment_instrument' AND cov.name = %1";
     $result = CRM_Core_DAO::executeQuery($sqlQuery, [1 => [$pmName, 'String']]);
     $result->fetch();
