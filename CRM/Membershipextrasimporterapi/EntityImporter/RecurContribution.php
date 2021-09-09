@@ -38,21 +38,22 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContribution {
 
   private function updateExistingRecurContribution($recurContributionId) {
     $sqlParams = $this->prepareSqlParams();
-    $sqlParams[16] = [$recurContributionId, 'Integer'];
-    $sqlQuery = "UPDATE `civicrm_contribution_recur` SET 
-                `contact_id` = %1, `amount` = %2, `currency` = %3, `frequency_unit` = %4, `frequency_interval` = %5, 
-                `installments` = %6, `start_date` = %7, `contribution_status_id` = %8, `payment_processor_id` = %9, 
-                `financial_type_id` = %10, `payment_instrument_id` = %11, `auto_renew` = %12, `create_date` = %13,
-                `next_sched_contribution_date` = %14, `cycle_day` = %15
-                WHERE id = %16";
+    $sqlParams[15] = [$recurContributionId, 'Integer'];
+    $sqlQuery = "UPDATE `civicrm_contribution_recur` SET
+                `contact_id` = %1, `currency` = %2, `frequency_unit` = %3, `frequency_interval` = %4,
+                `installments` = %5, `start_date` = %6, `contribution_status_id` = %7, `payment_processor_id` = %8,
+                `financial_type_id` = %9, `payment_instrument_id` = %10, `auto_renew` = %11, `create_date` = %12,
+                `next_sched_contribution_date` = %13, `cycle_day` = %14
+                WHERE id = %15";
     SQLQueryRunner::executeQuery($sqlQuery, $sqlParams);
   }
 
   private function createNewRecurContribution() {
     $sqlParams = $this->prepareSqlParams();
-    $sqlQuery = "INSERT INTO `civicrm_contribution_recur` (`contact_id` , `amount` , `currency` , `frequency_unit` , `frequency_interval` , `installments` ,
+    $sqlParams[15] = [0, 'Integer'];
+    $sqlQuery = "INSERT INTO `civicrm_contribution_recur` (`contact_id`, `currency` , `frequency_unit` , `frequency_interval` , `installments` ,
             `start_date`, `contribution_status_id`, `payment_processor_id` , `financial_type_id` , `payment_instrument_id`, `auto_renew`, `create_date`,
-            `next_sched_contribution_date`, `cycle_day`) 
+            `next_sched_contribution_date`, `cycle_day`, `amount`)
             VALUES (%1, %2, %3, %4, %5, %6, %7, %8, %9 ,%10, %11, %12, %13, %14, %15)";
     SQLQueryRunner::executeQuery($sqlQuery, $sqlParams);
 
@@ -60,7 +61,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContribution {
     $dao->fetch();
     $recurContributionId = $dao->recur_contribution_id;
 
-    $sqlQuery = "INSERT INTO `civicrm_value_contribution_recur_ext_id` (`entity_id` , `external_id`) 
+    $sqlQuery = "INSERT INTO `civicrm_value_contribution_recur_ext_id` (`entity_id` , `external_id`)
            VALUES ({$recurContributionId}, %1)";
     SQLQueryRunner::executeQuery($sqlQuery, [1 => [$this->rowData['payment_plan_external_id'], 'String']]);
 
@@ -101,7 +102,6 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContribution {
    * @throws CRM_Membershipextrasimporterapi_Exception_InvalidRecurContributionFieldException
    */
   private function prepareSqlParams() {
-    $amount = $this->getAmount();
     $currency = $this->getCurrency();
     $frequencyParams = $this->calculateFrequencyParameters();
     $recurContributionStatusId = $this->getRecurContributionStatusId();
@@ -116,36 +116,26 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContribution {
 
     return [
       1 => [$this->contactId, 'Integer'],
-      2 => [$amount, 'Money'],
-      3 => [$currency, 'String'],
-      4 => [$frequencyParams['unit'], 'String'],
-      5 => [$frequencyParams['interval'], 'Integer'],
-      6 => [$frequencyParams['installments_count'], 'Integer'],
-      7 => [$startDate, 'String'],
-      8 => [(int) $recurContributionStatusId, 'Integer'],
-      9 => [(int) $paymentProcessorId, 'Integer'],
-      10 => [(int) $financialTypeId, 'Integer'],
-      11 => [(int) $paymentMethodId, 'Integer'],
-      12 => [$isAutoRenew, 'Integer'],
-      13 => [$createDate, 'String'],
-      14 => [$nextContributionDate, 'String'],
-      15 => [(int) $cycleDay, 'Integer'],
+      2 => [$currency, 'String'],
+      3 => [$frequencyParams['unit'], 'String'],
+      4 => [$frequencyParams['interval'], 'Integer'],
+      5 => [$frequencyParams['installments_count'], 'Integer'],
+      6 => [$startDate, 'String'],
+      7 => [(int) $recurContributionStatusId, 'Integer'],
+      8 => [(int) $paymentProcessorId, 'Integer'],
+      9 => [(int) $financialTypeId, 'Integer'],
+      10 => [(int) $paymentMethodId, 'Integer'],
+      11 => [$isAutoRenew, 'Integer'],
+      12 => [$createDate, 'String'],
+      13 => [$nextContributionDate, 'String'],
+      14 => [(int) $cycleDay, 'Integer'],
     ];
-  }
-
-  private function getAmount() {
-    $amount = 0;
-    if (!empty($this->rowData['payment_plan_total_amount'])) {
-      $amount = $this->rowData['payment_plan_total_amount'];
-    }
-
-    return $amount;
   }
 
   private function getCurrency() {
     if (!isset($this->cachedValues['currencies_enabled'])) {
-      $sqlQuery = "SELECT cov.name as name, cov.value as id FROM civicrm_option_value cov 
-                  INNER JOIN civicrm_option_group cog ON cov.option_group_id = cog.id 
+      $sqlQuery = "SELECT cov.name as name, cov.value as id FROM civicrm_option_value cov
+                  INNER JOIN civicrm_option_group cog ON cov.option_group_id = cog.id
                   WHERE cog.name = 'currencies_enabled'";
       $result = SQLQueryRunner::executeQuery($sqlQuery);
       while ($result->fetch()) {
@@ -188,8 +178,8 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContribution {
     }
 
     if (!isset($this->cachedValues['recur_contribution_statuses'])) {
-      $sqlQuery = "SELECT cov.name as name, cov.value as id FROM civicrm_option_value cov 
-                  INNER JOIN civicrm_option_group cog ON cov.option_group_id = cog.id 
+      $sqlQuery = "SELECT cov.name as name, cov.value as id FROM civicrm_option_value cov
+                  INNER JOIN civicrm_option_group cog ON cov.option_group_id = cog.id
                   WHERE cog.name = 'contribution_recur_status'";
       $result = SQLQueryRunner::executeQuery($sqlQuery);
       while ($result->fetch()) {
@@ -256,8 +246,8 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContribution {
 
   private function getPaymentMethodId() {
     if (!isset($this->cachedValues['payment_methods'])) {
-      $sqlQuery = "SELECT cov.name as name, cov.value as id FROM civicrm_option_value cov 
-                  INNER JOIN civicrm_option_group cog ON cov.option_group_id = cog.id 
+      $sqlQuery = "SELECT cov.name as name, cov.value as id FROM civicrm_option_value cov
+                  INNER JOIN civicrm_option_group cog ON cov.option_group_id = cog.id
                   WHERE cog.name = 'payment_instrument'";
       $result = SQLQueryRunner::executeQuery($sqlQuery);
       while ($result->fetch()) {
@@ -321,9 +311,9 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContribution {
     }
 
     $activationQuery = "
-      INSERT INTO civicrm_value_payment_plan_extra_attributes  
-      (entity_id, is_active) VALUES ({$recurContributionId}, {$isActive}) 
-      ON DUPLICATE KEY UPDATE is_active = {$isActive} 
+      INSERT INTO civicrm_value_payment_plan_extra_attributes
+      (entity_id, is_active) VALUES ({$recurContributionId}, {$isActive})
+      ON DUPLICATE KEY UPDATE is_active = {$isActive}
      ";
     SQLQueryRunner::executeQuery($activationQuery);
   }
