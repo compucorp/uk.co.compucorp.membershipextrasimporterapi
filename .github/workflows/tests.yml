@@ -48,7 +48,7 @@ jobs:
       - name: Installing Membershipextras Importer API extension and its dependencies
         working-directory: ${{ env.CIVICRM_EXTENSIONS_DIR }}
         run: |
-          git clone --depth 1 https://github.com/compucorp/uk.co.compucorp.membershipextras.git
+          git clone --depth 1 https://github.com/compucorp/uk.co.compucorp.membershipextras.git -b MAE-636-reorgnise-upgrader
           git clone --depth 1 https://github.com/compucorp/uk.co.compucorp.manualdirectdebit.git
           git clone --depth 1 https://github.com/eileenmcnaughton/nz.co.fuzion.csvimport.git
           cv en uk.co.compucorp.membershipextras uk.co.compucorp.manualdirectdebit nz.co.fuzion.csvimport uk.co.compucorp.membershipextrasimporterapi
