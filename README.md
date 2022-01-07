@@ -3,24 +3,17 @@
 This extension creates new API Endpoint `MembershipextrasImporter` that can be used within [CSV Importer](https://github.com/eileenmcnaughton/nz.co.fuzion.csvimport) extension,
 which allows importing Payment Plan membership orders and direct debit information using the data model used in [Membershipextras](https://github.com/compucorp/uk.co.compucorp.membershipextras) suite.
 
-More details about the functionality of this importer and fields mapping are available here (not publicly available document yet): 
+More details about the functionality of this importer and fields mapping are available here (not publicly available document yet):
 https://compucorp.atlassian.net/wiki/spaces/ME/pages/2307489795/Membership+importer+Ready+for+kickoff+Payment+plan+importer
 
 # Dependencies
-To be able to use this extension you will need : 
+To be able to use this extension you will need :
 
 - [Membershipextras extension](https://github.com/compucorp/uk.co.compucorp.membershipextras) : Which provides support for payment plan memberships.
 - [CSV Importer extension](https://github.com/eileenmcnaughton/nz.co.fuzion.csvimport) : Which provides the mechanism to import CSV files using any API Endpoint.
 
-And optionally : 
+And optionally :
 - [Manual Direct debit extension](https://github.com/compucorp/uk.co.compucorp.manualdirectdebit) : In case you have payment plan orders paid with Direct debit.
-
-
-It also requires the following custom groups (which are created by Membershipextras extension and disabled by default) and their custom fields to be activated : 
-
-- Recurring Contribution External ID
-- Contribution External ID
-- Membership External ID
 
 ## Usage
 
@@ -32,12 +25,12 @@ to the extension import screen and selecting `MembershipextrasImporter` in "Enti
 Then choose the CSV file you want to import and go through the rest of the steps. Though, hence the following:
 
 1- Once the import begins, it will process rows in batches and it will trigger separate Ajax request for each batch, the number of rows to be processed
-in each batch are controlled by "Number Of Items To Process For Each Queue Item" setting : 
+in each batch are controlled by "Number Of Items To Process For Each Queue Item" setting :
 
 ![2](https://user-images.githubusercontent.com/6275540/115318178-e3d45d80-a185-11eb-909e-5e8a425dbdd8.png)
 
 You need to choose a number that is not very large which might result in timeout issues, nor a number that is very small that result in a lot of Ajax
-requests to the server. For example, suppose you have 100,000 records to import and suppose that your PHP timeout setting is 60 seconds, if you select 
+requests to the server. For example, suppose you have 100,000 records to import and suppose that your PHP timeout setting is 60 seconds, if you select
 the number of items to process setting to be 1, then the importer will trigger 100,000 ajax request to the server which is a lot, and if you choose a number
 such as 10,000, then the importer will most likely take more than 60 seconds to process such number of rows in a single Ajax request, so try to find a number
 that works best for your server configurations.
@@ -48,7 +41,7 @@ to update existing records, also hence that it by default looks for existing rec
 
 ![3](https://user-images.githubusercontent.com/6275540/115318186-eb940200-a185-11eb-89a3-8766f4125e70.png)
 
-3- Depending on your server configurations and the size of the data you are trying to import,you might need to consider increasing 
+3- Depending on your server configurations and the size of the data you are trying to import,you might need to consider increasing
 the following configurations:
 
 A- Nginx `client_max_body_size`.

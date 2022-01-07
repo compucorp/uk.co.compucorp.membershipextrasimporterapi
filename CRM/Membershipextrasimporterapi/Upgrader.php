@@ -12,6 +12,10 @@ class CRM_Membershipextrasimporterapi_Upgrader extends CRM_Membershipextrasimpor
     $this->setExternalIdFieldsToBeUnique();
   }
 
+  public function uninstall() {
+    $this->removeExternalIdCustomGroupsAndFields();
+  }
+
   /**
    * Creates the Line item external id which might be useful for data import at some point
    * later (though we have no use for it currently).
@@ -93,6 +97,27 @@ class CRM_Membershipextrasimporterapi_Upgrader extends CRM_Membershipextrasimpor
         'is_searchable' => 1,
         'column_name' => 'external_id',
         'is_view' => 1,
+      ]);
+    }
+  }
+
+  private function removeExternalIdCustomGroupsAndFields() {
+    $customGroups = [
+      'recurring_contribution_external_id',
+      'contribution_external_id',
+      'membership_external_id',
+      'line_item_external_id',
+    ];
+    foreach ($customGroups as $customGroupName) {
+      civicrm_api3('CustomField', 'get', [
+        'name' => 'external_id',
+        'custom_group_id' => $customGroupName,
+        'api.CustomField.delete' => ['id' => '$value.id'],
+      ]);
+
+      civicrm_api3('CustomGroup', 'get', [
+        'name' => $customGroupName,
+        'api.CustomGroup.delete' => ['id' => '$value.id'],
       ]);
     }
   }
