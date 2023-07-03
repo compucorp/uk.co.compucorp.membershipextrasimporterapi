@@ -45,13 +45,16 @@ function _civicrm_api3_membershipextras_importer_create_spec(&$params) {
   $params['payment_plan_frequency'] = [
     'title' => 'Payment Plan Frequency',
     'type' => CRM_Utils_Type::T_STRING,
-    'api.required' => 1,
   ];
 
   $params['payment_plan_next_contribution_date'] = [
     'title' => 'Payment Plan Next Contribution Date',
     'type' => CRM_Utils_Type::T_DATE,
-    'api.required' => 1,
+  ];
+
+  $params['payment_plan_payment_scheme_id'] = [
+    'title' => 'Payment Plan Payment Scheme id',
+    'type' => CRM_Utils_Type::T_INT,
   ];
 
   $params['payment_plan_start_date'] = [
