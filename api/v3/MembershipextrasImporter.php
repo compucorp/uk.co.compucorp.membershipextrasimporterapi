@@ -235,7 +235,7 @@ function _civicrm_api3_membershipextras_importer_create_spec(&$params) {
     'type' => CRM_Utils_Type::T_INT,
   ];
 
-  // Direct Debit Mandate
+  // Manual Direct Debit Mandate
   $params['direct_debit_mandate_reference'] = [
     'title' => 'Direct Debit Mandate Reference',
     'type' => CRM_Utils_Type::T_STRING,

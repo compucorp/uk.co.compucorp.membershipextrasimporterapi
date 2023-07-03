@@ -5,7 +5,7 @@ use CRM_Membershipextrasimporterapi_EntityImporter_Membership as MembershipImpor
 use CRM_Membershipextrasimporterapi_EntityImporter_Contribution as ContributionImporter;
 use CRM_Membershipextrasimporterapi_EntityCreator_MembershipPayment as MembershipPaymentCreator;
 use CRM_Membershipextrasimporterapi_EntityImporter_LineItem as LineItemImporter;
-use CRM_Membershipextrasimporterapi_EntityImporter_DirectDebitMandate as DirectDebitMandateImporter;
+use CRM_Membershipextrasimporterapi_EntityImporter_ManualDirectDebitMandate as ManualDirectDebitMandateImporter;
 use CRM_Membershipextrasimporterapi_Helper_SQLQueryRunner as SQLQueryRunner;
 
 class CRM_Membershipextrasimporterapi_CSVRowImporter {
@@ -39,7 +39,7 @@ class CRM_Membershipextrasimporterapi_CSVRowImporter {
       $lineItemImporter = new LineItemImporter($this->rowData, $contributionId, $membershipId, $recurContributionId);
       $lineItemImporter->import();
 
-      $mandateImporter = new DirectDebitMandateImporter($this->rowData, $this->contactId, $recurContributionId, $contributionId);
+      $mandateImporter = new ManualDirectDebitMandateImporter($this->rowData, $this->contactId, $recurContributionId, $contributionId);
       $mandateImporter->import();
 
       $transaction->commit();

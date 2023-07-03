@@ -1,6 +1,6 @@
 <?php
 
-use CRM_Membershipextrasimporterapi_EntityImporter_DirectDebitMandate as DirectDebitMandateImporter;
+use CRM_Membershipextrasimporterapi_EntityImporter_ManualDirectDebitMandate as ManualDirectDebitMandateImporter;
 use CRM_MembershipExtras_Test_Fabricator_Contact as ContactFabricator;
 use CRM_MembershipExtras_Test_Fabricator_RecurringContribution as RecurContributionFabricator;
 use CRM_MembershipExtras_Test_Fabricator_Contribution as ContributionFabricator;
@@ -9,7 +9,7 @@ use CRM_MembershipExtras_Test_Fabricator_Contribution as ContributionFabricator;
  *
  * @group headless
  */
-class CRM_Membershipextrasimporterapi_EntityImporter_DirectDebitMandateTest extends BaseHeadlessTest {
+class CRM_Membershipextrasimporterapi_EntityImporter_ManualDirectDebitMandateTest extends BaseHeadlessTest {
 
   private $sampleRowData = [
     'payment_plan_payment_processor' => 'Direct Debit',
@@ -66,7 +66,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_DirectDebitMandateTest exte
   public function testImportWithNoDirectDebitPaymentProcessorWillNotCreateMandate() {
     $this->sampleRowData['payment_plan_payment_processor'] = 'Paypal';
 
-    $mandateImporter = new DirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
+    $mandateImporter = new ManualDirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
     $newMandateId = $mandateImporter->import();
 
     $this->assertEmpty($newMandateId);
@@ -77,14 +77,14 @@ class CRM_Membershipextrasimporterapi_EntityImporter_DirectDebitMandateTest exte
     $this->expectException(CRM_Membershipextrasimporterapi_Exception_InvalidDirectDebitMandateException::class);
     $this->expectExceptionCode(100);
 
-    $mandateImporter = new DirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
+    $mandateImporter = new ManualDirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
     $mandateImporter->import();
   }
 
   public function testImportNewDirectDebitMandate() {
     $beforeImportIds = $this->getMandateIdByReference($this->sampleRowData['direct_debit_mandate_reference']);
 
-    $mandateImporter = new DirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
+    $mandateImporter = new ManualDirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
     $newMandateId = $mandateImporter->import();
 
     $afterImportIds = $this->getMandateIdByReference($this->sampleRowData['direct_debit_mandate_reference']);
@@ -103,12 +103,12 @@ class CRM_Membershipextrasimporterapi_EntityImporter_DirectDebitMandateTest exte
     $this->expectException(CRM_Membershipextrasimporterapi_Exception_InvalidDirectDebitMandateException::class);
     $this->expectExceptionCode(200);
 
-    $mandateImporter = new DirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
+    $mandateImporter = new ManualDirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
     $mandateImporter->import();
   }
 
   public function testImportSetsCorrectBankNameValue() {
-    $mandateImporter = new DirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
+    $mandateImporter = new ManualDirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
     $newMandateId = $mandateImporter->import();
 
     $mandate = $this->getMandateById($newMandateId);
@@ -122,12 +122,12 @@ class CRM_Membershipextrasimporterapi_EntityImporter_DirectDebitMandateTest exte
     $this->expectException(CRM_Membershipextrasimporterapi_Exception_InvalidDirectDebitMandateException::class);
     $this->expectExceptionCode(300);
 
-    $mandateImporter = new DirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
+    $mandateImporter = new ManualDirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
     $mandateImporter->import();
   }
 
   public function testImportSetsCorrectAccountHolderValue() {
-    $mandateImporter = new DirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
+    $mandateImporter = new ManualDirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
     $newMandateId = $mandateImporter->import();
 
     $mandate = $this->getMandateById($newMandateId);
@@ -141,7 +141,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_DirectDebitMandateTest exte
     $this->expectException(CRM_Membershipextrasimporterapi_Exception_InvalidDirectDebitMandateException::class);
     $this->expectExceptionCode(400);
 
-    $mandateImporter = new DirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
+    $mandateImporter = new ManualDirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
     $mandateImporter->import();
   }
 
@@ -151,7 +151,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_DirectDebitMandateTest exte
     $this->expectException(CRM_Membershipextrasimporterapi_Exception_InvalidDirectDebitMandateException::class);
     $this->expectExceptionCode(500);
 
-    $mandateImporter = new DirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
+    $mandateImporter = new ManualDirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
     $mandateImporter->import();
   }
 
@@ -161,12 +161,12 @@ class CRM_Membershipextrasimporterapi_EntityImporter_DirectDebitMandateTest exte
     $this->expectException(CRM_Membershipextrasimporterapi_Exception_InvalidDirectDebitMandateException::class);
     $this->expectExceptionCode(500);
 
-    $mandateImporter = new DirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
+    $mandateImporter = new ManualDirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
     $mandateImporter->import();
   }
 
   public function testImportSetsCorrectAccountNumberValue() {
-    $mandateImporter = new DirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
+    $mandateImporter = new ManualDirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
     $newMandateId = $mandateImporter->import();
 
     $mandate = $this->getMandateById($newMandateId);
@@ -180,7 +180,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_DirectDebitMandateTest exte
     $this->expectException(CRM_Membershipextrasimporterapi_Exception_InvalidDirectDebitMandateException::class);
     $this->expectExceptionCode(600);
 
-    $mandateImporter = new DirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
+    $mandateImporter = new ManualDirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
     $mandateImporter->import();
   }
 
@@ -190,7 +190,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_DirectDebitMandateTest exte
     $this->expectException(CRM_Membershipextrasimporterapi_Exception_InvalidDirectDebitMandateException::class);
     $this->expectExceptionCode(700);
 
-    $mandateImporter = new DirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
+    $mandateImporter = new ManualDirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
     $mandateImporter->import();
   }
 
@@ -200,12 +200,12 @@ class CRM_Membershipextrasimporterapi_EntityImporter_DirectDebitMandateTest exte
     $this->expectException(CRM_Membershipextrasimporterapi_Exception_InvalidDirectDebitMandateException::class);
     $this->expectExceptionCode(700);
 
-    $mandateImporter = new DirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
+    $mandateImporter = new ManualDirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
     $mandateImporter->import();
   }
 
   public function testImportSetsCorrectSortCodeValue() {
-    $mandateImporter = new DirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
+    $mandateImporter = new ManualDirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
     $newMandateId = $mandateImporter->import();
 
     $mandate = $this->getMandateById($newMandateId);
@@ -219,7 +219,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_DirectDebitMandateTest exte
     $this->expectException(CRM_Membershipextrasimporterapi_Exception_InvalidDirectDebitMandateException::class);
     $this->expectExceptionCode(800);
 
-    $mandateImporter = new DirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
+    $mandateImporter = new ManualDirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
     $mandateImporter->import();
   }
 
@@ -229,12 +229,12 @@ class CRM_Membershipextrasimporterapi_EntityImporter_DirectDebitMandateTest exte
     $this->expectException(CRM_Membershipextrasimporterapi_Exception_InvalidDirectDebitMandateException::class);
     $this->expectExceptionCode(900);
 
-    $mandateImporter = new DirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
+    $mandateImporter = new ManualDirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
     $mandateImporter->import();
   }
 
   public function testImportSetsCorrectDDCodeValue() {
-    $mandateImporter = new DirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
+    $mandateImporter = new ManualDirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
     $newMandateId = $mandateImporter->import();
 
     $mandate = $this->getMandateById($newMandateId);
@@ -249,12 +249,12 @@ class CRM_Membershipextrasimporterapi_EntityImporter_DirectDebitMandateTest exte
     $this->expectException(CRM_Membershipextrasimporterapi_Exception_InvalidDirectDebitMandateException::class);
     $this->expectExceptionCode(1200);
 
-    $mandateImporter = new DirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
+    $mandateImporter = new ManualDirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
     $mandateImporter->import();
   }
 
   public function testImportSetsCorrectStartDateValue() {
-    $mandateImporter = new DirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
+    $mandateImporter = new ManualDirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
     $newMandateId = $mandateImporter->import();
 
     $mandate = $this->getMandateById($newMandateId);
@@ -269,7 +269,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_DirectDebitMandateTest exte
     $this->expectException(CRM_Membershipextrasimporterapi_Exception_InvalidDirectDebitMandateException::class);
     $this->expectExceptionCode(1000);
 
-    $mandateImporter = new DirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
+    $mandateImporter = new ManualDirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
     $mandateImporter->import();
   }
 
@@ -279,12 +279,12 @@ class CRM_Membershipextrasimporterapi_EntityImporter_DirectDebitMandateTest exte
     $this->expectException(CRM_Membershipextrasimporterapi_Exception_InvalidDirectDebitMandateException::class);
     $this->expectExceptionCode(1100);
 
-    $mandateImporter = new DirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
+    $mandateImporter = new ManualDirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
     $mandateImporter->import();
   }
 
   public function testImportSetsCorrectOriginatorNumberValue() {
-    $mandateImporter = new DirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
+    $mandateImporter = new ManualDirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
     $newMandateId = $mandateImporter->import();
 
     $mandate = $this->getMandateById($newMandateId);
@@ -293,7 +293,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_DirectDebitMandateTest exte
   }
 
   public function testImportSetsCorrectContactId() {
-    $mandateImporter = new DirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
+    $mandateImporter = new ManualDirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
     $newMandateId = $mandateImporter->import();
 
     $mandate = $this->getMandateById($newMandateId);
@@ -302,7 +302,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_DirectDebitMandateTest exte
   }
 
   public function testImportNewCreatesRecurContributionReferenceRecord() {
-    $mandateImporter = new DirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
+    $mandateImporter = new ManualDirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
     $newMandateId = $mandateImporter->import();
 
     $mandates = $this->getMandateRecurContributionReferences();
@@ -312,7 +312,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_DirectDebitMandateTest exte
   }
 
   public function testImportNewCreatesContributionReferenceRecord() {
-    $mandateImporter = new DirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
+    $mandateImporter = new ManualDirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
     $newMandateId = $mandateImporter->import();
 
     $mandates = $this->getMandateContributionReferences();
@@ -324,7 +324,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_DirectDebitMandateTest exte
   public function testImportWillNotCreateContributionReferenceRecordIfContributionPaymentMethodIsNotDirectDebit() {
     $this->sampleRowData['contribution_payment_method'] = 'EFT';
 
-    $mandateImporter = new DirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
+    $mandateImporter = new ManualDirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
     $mandateImporter->import();
 
     $mandates = $this->getMandateContributionReferences();
@@ -333,7 +333,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_DirectDebitMandateTest exte
   }
 
   public function testImportExistingMandateWillUpdateItCorrectly() {
-    $firstImport = new DirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
+    $firstImport = new ManualDirectDebitMandateImporter($this->sampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
     $firstMandateId = $firstImport->import();
 
     $updatedSampleRowData = [
@@ -348,7 +348,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_DirectDebitMandateTest exte
       'direct_debit_mandate_start_date' => '20220101000000',
       'direct_debit_mandate_originator_number' => 'Test Originator',
     ];
-    $secondImport = new DirectDebitMandateImporter($updatedSampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
+    $secondImport = new ManualDirectDebitMandateImporter($updatedSampleRowData, $this->contactId, $this->recurContributionId, $this->contributionId);
     $secondImport->import();
 
     $expectedResult = [
