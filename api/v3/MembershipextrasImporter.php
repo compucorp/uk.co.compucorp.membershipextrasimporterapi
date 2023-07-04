@@ -275,4 +275,20 @@ function _civicrm_api3_membershipextras_importer_create_spec(&$params) {
     'title' => 'Direct Debit Mandate Originator Number',
     'type' => CRM_Utils_Type::T_STRING,
   ];
+
+  // External Direct Debit fields
+  $params['external_direct_debit_mandate_id'] = [
+    'title' => 'External Direct Debit Mandate Id',
+    'type' => CRM_Utils_Type::T_STRING,
+  ];
+
+  $params['external_direct_debit_mandate_status'] = [
+    'title' => 'External Direct Debit Mandate Status',
+    'type' => CRM_Utils_Type::T_STRING,
+  ];
+
+  $params['external_direct_debit_next_available_payment_date'] = [
+    'title' => 'External Direct Debit Next Available Payment Date',
+    'type' => CRM_Utils_Type::T_DATE,
+  ];
 }

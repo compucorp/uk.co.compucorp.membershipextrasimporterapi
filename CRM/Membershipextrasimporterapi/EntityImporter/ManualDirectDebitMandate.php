@@ -252,7 +252,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_ManualDirectDebitMandate {
 
   private function formatRowDate($dateColumnName, $columnLabel, $isRequired = FALSE) {
     if ($isRequired && empty($this->rowData[$dateColumnName])) {
-      throw new CRM_Membershipextrasimporterapi_Exception_InvalidDirectDebitMandateException("Direct Debit Mandate '{$columnLabel}' is required field.", 1200);
+      throw new CRM_Membershipextrasimporterapi_Exception_InvalidDirectDebitMandateException("Manual Direct Debit Mandate '{$columnLabel}' is required field.", 1200);
     }
 
     if (!empty($this->rowData[$dateColumnName])) {
