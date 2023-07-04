@@ -48,11 +48,11 @@ jobs:
       - name: Installing Membershipextras Importer API extension and its dependencies
         working-directory: ${{ env.CIVICRM_EXTENSIONS_DIR }}
         run: |
-          git clone --depth 1 https://github.com/compucorp/uk.co.compucorp.membershipextras.git
+          git clone --depth 1  -b CIWEMB-84-workstream https://github.com/compucorp/uk.co.compucorp.membershipextras.git
           git clone --depth 1 https://github.com/compucorp/uk.co.compucorp.manualdirectdebit.git
           git clone --depth 1 https://github.com/compucorp/io.compuco.multicompanyaccounting.git
           git clone --depth 1 https://github.com/compucorp/io.compuco.automateddirectdebit.git
-          git clone --depth 1 -b 1.10 https://github.com/eileenmcnaughton/nz.co.fuzion.csvimport.git
+          git clone --depth 1 -b 1.10-patches https://github.com/compucorp/nz.co.fuzion.csvimport.git
           cv en uk.co.compucorp.membershipextras uk.co.compucorp.manualdirectdebit io.compuco.automateddirectdebit nz.co.fuzion.csvimport uk.co.compucorp.membershipextrasimporterapi
 
       - name: Run phpunit tests
