@@ -345,6 +345,27 @@ class CRM_Membershipextrasimporterapi_EntityImporter_ContributionTest extends Ba
     $this->assertEquals($expectedInvoiceNumber, $newContribution['invoice_number']);
   }
 
+  public function testImportWillSetOwnerOrgIdIfItIsAvailable() {
+    civicrm_api3('Extension', 'install', [
+      'keys' => "io.compuco.multicompanyaccounting",
+    ]);
+
+    $this->sampleRowData['contribution_external_id'] = 'test24';
+    $this->sampleRowData['contribution_owner_org_id'] = $this->contactId;
+
+    $contributionImporter = new ContributionImporter($this->sampleRowData, $this->contactId, $this->recurContributionId);
+    $newContributionId = $contributionImporter->import();
+
+    $sqlQuery = "SELECT owner_organization FROM civicrm_value_multicompanyaccounting_ownerorg WHERE entity_id = {$newContributionId}";
+    $storedOwnerOrgID = CRM_Core_DAO::singleValueQuery($sqlQuery);
+
+    $this->assertEquals($this->contactId, $storedOwnerOrgID);
+
+    civicrm_api3('Extension', 'disable', [
+      'keys' => "io.compuco.multicompanyaccounting",
+    ]);
+  }
+
   private function getContributionsByContactId($contactId) {
     $contributionIds = NULL;
 
@@ -373,8 +394,8 @@ class CRM_Membershipextrasimporterapi_EntityImporter_ContributionTest extends Ba
   }
 
   private function getContributionPaymentMethodId($pmName) {
-    $sqlQuery = "SELECT cov.value as id FROM civicrm_option_value cov 
-                  INNER JOIN civicrm_option_group cog ON cov.option_group_id = cog.id 
+    $sqlQuery = "SELECT cov.value as id FROM civicrm_option_value cov
+                  INNER JOIN civicrm_option_group cog ON cov.option_group_id = cog.id
                   WHERE cog.name = 'payment_instrument' AND cov.name = %1";
     $result = CRM_Core_DAO::executeQuery($sqlQuery, [1 => [$pmName, 'String']]);
     $result->fetch();
@@ -382,8 +403,8 @@ class CRM_Membershipextrasimporterapi_EntityImporter_ContributionTest extends Ba
   }
 
   private function getContributionStatusId($statusName) {
-    $sqlQuery = "SELECT cov.value as id FROM civicrm_option_value cov 
-                  INNER JOIN civicrm_option_group cog ON cov.option_group_id = cog.id 
+    $sqlQuery = "SELECT cov.value as id FROM civicrm_option_value cov
+                  INNER JOIN civicrm_option_group cog ON cov.option_group_id = cog.id
                   WHERE cog.name = 'contribution_status' AND cov.name = %1";
     $result = CRM_Core_DAO::executeQuery($sqlQuery, [1 => [$statusName, 'String']]);
     $result->fetch();
@@ -391,7 +412,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_ContributionTest extends Ba
   }
 
   private function getPaymentProcessorFinancialAccountId($paymentProcessorId) {
-    $sqlQuery = "SELECT financial_account_id FROM civicrm_entity_financial_account 
+    $sqlQuery = "SELECT financial_account_id FROM civicrm_entity_financial_account
                    WHERE entity_table = 'civicrm_payment_processor' AND entity_id = {$paymentProcessorId}";
     $result = CRM_Core_DAO::executeQuery($sqlQuery);
     $result->fetch();
@@ -400,9 +421,9 @@ class CRM_Membershipextrasimporterapi_EntityImporter_ContributionTest extends Ba
 
   private function getContributionFinancialTransaction($contributionId) {
     $sqlQuery = "SELECT ceft.amount as ef_amount, cft.total_amount as f_amount, cft.currency, cft.status_id, cft.payment_instrument_id, cft.to_financial_account_id,
-                 cft.trxn_date as f_trxn_date, cft.net_amount as f_net_amount, cft.is_payment as f_is_payment  
+                 cft.trxn_date as f_trxn_date, cft.net_amount as f_net_amount, cft.is_payment as f_is_payment
                  FROM civicrm_entity_financial_trxn ceft
-                 INNER JOIN civicrm_financial_trxn cft ON ceft.financial_trxn_id = cft.id 
+                 INNER JOIN civicrm_financial_trxn cft ON ceft.financial_trxn_id = cft.id
                  WHERE ceft.entity_table = 'civicrm_contribution' AND ceft.entity_id = {$contributionId}";
     $result = CRM_Core_DAO::executeQuery($sqlQuery);
     $result->fetch();

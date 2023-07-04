@@ -25,9 +25,9 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Contribution {
     }
 
     $sqlParams = $this->prepareSqlParams();
-    $sqlQuery = "INSERT INTO `civicrm_contribution` (`contact_id` , `financial_type_id` , `payment_instrument_id` , 
+    $sqlQuery = "INSERT INTO `civicrm_contribution` (`contact_id` , `financial_type_id` , `payment_instrument_id` ,
                  `receive_date` , `total_amount` , `currency`, `contribution_recur_id` , `is_pay_later`,
-                  `contribution_status_id`, `invoice_number`, `source`) 
+                  `contribution_status_id`, `invoice_number`, `source`)
                  VALUES (%1, %2, %3, %4, %5, %6, %7, %8, %9, %10, %11)";
     SQLQueryRunner::executeQuery($sqlQuery, $sqlParams);
 
@@ -35,13 +35,15 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Contribution {
     $dao->fetch();
     $contributionId = $dao->contribution_id;
 
-    $sqlQuery = "INSERT INTO `civicrm_value_contribution_ext_id` (`entity_id` , `external_id`) 
+    $sqlQuery = "INSERT INTO `civicrm_value_contribution_ext_id` (`entity_id` , `external_id`)
            VALUES ({$contributionId}, %1)";
     SQLQueryRunner::executeQuery($sqlQuery, [1 => [$this->rowData['contribution_external_id'], 'String']]);
 
     $mappedContributionParams = $this->mapContributionSQLParamsToNames($sqlParams);
     $financialTransactionId = $this->createFinancialTransactionRecord($mappedContributionParams);
     $this->createEntityFinancialTransactionRecord($contributionId, $financialTransactionId, $mappedContributionParams);
+
+    $this->setOwnerOrganisationIfExist($contributionId);
 
     return $contributionId;
   }
@@ -116,8 +118,8 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Contribution {
 
   private function getPaymentMethodId() {
     if (!isset($this->cachedValues['payment_methods'])) {
-      $sqlQuery = "SELECT cov.name as name, cov.value as id FROM civicrm_option_value cov 
-                  INNER JOIN civicrm_option_group cog ON cov.option_group_id = cog.id 
+      $sqlQuery = "SELECT cov.name as name, cov.value as id FROM civicrm_option_value cov
+                  INNER JOIN civicrm_option_group cog ON cov.option_group_id = cog.id
                   WHERE cog.name = 'payment_instrument'";
       $result = SQLQueryRunner::executeQuery($sqlQuery);
       while ($result->fetch()) {
@@ -152,8 +154,8 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Contribution {
 
   private function getCurrency() {
     if (!isset($this->cachedValues['currencies_enabled'])) {
-      $sqlQuery = "SELECT cov.name as name, cov.value as id FROM civicrm_option_value cov 
-                  INNER JOIN civicrm_option_group cog ON cov.option_group_id = cog.id 
+      $sqlQuery = "SELECT cov.name as name, cov.value as id FROM civicrm_option_value cov
+                  INNER JOIN civicrm_option_group cog ON cov.option_group_id = cog.id
                   WHERE cog.name = 'currencies_enabled'";
       $result = SQLQueryRunner::executeQuery($sqlQuery);
       while ($result->fetch()) {
@@ -188,8 +190,8 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Contribution {
     }
 
     if (!isset($this->cachedValues['contribution_statuses'])) {
-      $sqlQuery = "SELECT cov.name as name, cov.value as id FROM civicrm_option_value cov 
-                  INNER JOIN civicrm_option_group cog ON cov.option_group_id = cog.id 
+      $sqlQuery = "SELECT cov.name as name, cov.value as id FROM civicrm_option_value cov
+                  INNER JOIN civicrm_option_group cog ON cov.option_group_id = cog.id
                   WHERE cog.name = 'contribution_status'";
       $result = SQLQueryRunner::executeQuery($sqlQuery);
       while ($result->fetch()) {
@@ -241,7 +243,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Contribution {
       8 => [$isPayment, 'Integer'],
     ];
     $sqlQuery = "INSERT INTO `civicrm_financial_trxn` (`to_financial_account_id`, `total_amount` , `currency`, `status_id` , `payment_instrument_id`,
-                `trxn_date`, `net_amount`, `is_payment`) 
+                `trxn_date`, `net_amount`, `is_payment`)
             VALUES (%1 , %2, %3, %4, %5, %6, %7, %8)";
     SQLQueryRunner::executeQuery($sqlQuery, $sqlParams);
 
@@ -261,7 +263,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Contribution {
    */
   private function getToFinancialAccountId() {
     $paymentProcessorId = $this->getPaymentProcessorIdFromRecurContribution();
-    $sqlQuery = "SELECT financial_account_id FROM civicrm_entity_financial_account 
+    $sqlQuery = "SELECT financial_account_id FROM civicrm_entity_financial_account
                    WHERE entity_table = 'civicrm_payment_processor' AND entity_id = {$paymentProcessorId}";
     $result = SQLQueryRunner::executeQuery($sqlQuery);
     $result->fetch();
@@ -279,9 +281,28 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Contribution {
     $sqlParams = [
       1 => [$mappedContributionParams['total_amount'], 'String'],
     ];
-    $sqlQuery = "INSERT INTO `civicrm_entity_financial_trxn` (`entity_table`, `entity_id` , `financial_trxn_id`, `amount`) 
+    $sqlQuery = "INSERT INTO `civicrm_entity_financial_trxn` (`entity_table`, `entity_id` , `financial_trxn_id`, `amount`)
                 VALUES ('civicrm_contribution', {$contributionId}, {$financialTransactionId}, %1)";
     SQLQueryRunner::executeQuery($sqlQuery, $sqlParams);
+  }
+
+  /**
+   * Sets the contribution owner organisation,
+   * which is only needed if Multicompany accounting
+   * is used (Multicompany accounting extension is enabled).
+   *
+   * @param $contributionId
+   *
+   * @return void
+   */
+  private function setOwnerOrganisationIfExist($contributionId) {
+    if (empty($this->rowData['contribution_owner_org_id'])) {
+      return;
+    }
+
+    $sqlQuery = "INSERT INTO `civicrm_value_multicompanyaccounting_ownerorg` (`entity_id` , `owner_organization`)
+           VALUES ({$contributionId}, %1)";
+    SQLQueryRunner::executeQuery($sqlQuery, [1 => [$this->rowData['contribution_owner_org_id'], 'Integer']]);
   }
 
 }

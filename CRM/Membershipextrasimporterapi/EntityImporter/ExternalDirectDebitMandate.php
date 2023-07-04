@@ -43,7 +43,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_ExternalDirectDebitMandate 
   private function getRecurContributionCurrentMandateRecordIdIfExist() {
     $sql = "SELECT id FROM civicrm_value_external_dd_mandate_information WHERE entity_id = %1";
     $dao = SQLQueryRunner::executeQuery($sql, [
-      1 => [$this->recurContributionId, 'Int'],
+      1 => [$this->recurContributionId, 'Integer'],
     ]);
 
     $dao->fetch();

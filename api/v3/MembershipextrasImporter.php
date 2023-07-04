@@ -181,6 +181,11 @@ function _civicrm_api3_membershipextras_importer_create_spec(&$params) {
     'type' => CRM_Utils_Type::T_STRING,
   ];
 
+  $params['contribution_owner_org_id'] = [
+    'title' => 'Contribution Owner organisation Id - For Multicompany accounting use only',
+    'type' => CRM_Utils_Type::T_INT,
+  ];
+
   // Line Item
   $params['line_item_entity_table'] = [
     'title' => 'Order Line Entity Type',
