@@ -5,7 +5,7 @@ use CRM_Membershipextrasimporterapi_ExtensionUtil as ExtensionUtil;
 /**
  * Collection of upgrade steps.
  */
-class CRM_Membershipextrasimporterapi_Upgrader extends CRM_Membershipextrasimporterapi_Upgrader_Base {
+class CRM_Membershipextrasimporterapi_Upgrader extends CRM_Extension_Upgrader_Base {
 
   public function postInstall() {
     $this->setupLineItemExternalId();
