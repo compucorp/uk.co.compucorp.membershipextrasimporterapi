@@ -1,0 +1,455 @@
+<?xml version="1.0" encoding="iso-8859-1" ?>
+
+<table>
+  <base>CRM/Membershipextrasimporterapi</base>
+  <class>MembershipextrasImporter</class>
+  <name>membershipextrasimporter_fake_entity</name>
+  <log>false</log>
+
+  <field>
+    <name>id</name>
+    <title>Id</title>
+    <type>int unsigned</type>
+    <required>true</required>
+    <html>
+      <label>Id</label>
+    </html>
+    <comment>Unique Inlay ID</comment>
+  </field>
+  <primaryKey>
+    <name>id</name>
+    <autoincrement>true</autoincrement>
+  </primaryKey>
+
+  <field>
+    <name>contact_id</name>
+    <title>Contact Id</title>
+    <type>int unsigned</type>
+    <html>
+      <label>Contact Id</label>
+    </html>
+  </field>
+  <field>
+    <name>contact_external_id</name>
+    <title>Contact External Id</title>
+    <type>varchar</type>
+    <length>255</length>
+    <html>
+      <label>Contact External Id</label>
+    </html>
+  </field>
+
+  <field>
+    <name>payment_plan_external_id</name>
+    <title>Payment Plan External Id</title>
+    <type>varchar</type>
+    <length>255</length>
+    <required>true</required>
+    <html>
+      <label>Payment Plan External Id</label>
+    </html>
+  </field>
+  <field>
+    <name>payment_plan_payment_processor</name>
+    <title>Payment Plan Payment Processor</title>
+    <type>varchar</type>
+    <length>255</length>
+    <required>true</required>
+    <html>
+      <label>Payment Plan Payment Processor</label>
+    </html>
+  </field>
+  <field>
+    <name>payment_plan_currency</name>
+    <title>Payment Plan Currency</title>
+    <type>varchar</type>
+    <length>255</length>
+    <required>true</required>
+    <html>
+      <label>Payment Plan Currency</label>
+    </html>
+  </field>
+  <field>
+    <name>payment_plan_frequency</name>
+    <title>Payment Plan Frequency</title>
+    <type>varchar</type>
+    <length>255</length>
+    <required>true</required>
+    <html>
+      <label>Payment Plan Frequency</label>
+    </html>
+  </field>
+  <field>
+    <name>payment_plan_next_contribution_date</name>
+    <title>Payment Plan Next Contribution Date</title>
+    <type>date</type>
+    <required>true</required>
+    <html>
+      <label>Payment Plan Next Contribution Date</label>
+    </html>
+  </field>
+  <field>
+    <name>payment_plan_start_date</name>
+    <title>Payment Plan Start Date</title>
+    <type>date</type>
+    <html>
+      <label>Payment Plan Start Date</label>
+    </html>
+  </field>
+  <field>
+    <name>payment_plan_create_date</name>
+    <title>Payment Plan Create Date</title>
+    <type>date</type>
+    <html>
+      <label>Payment Plan Create Date</label>
+    </html>
+  </field>
+  <field>
+    <name>payment_plan_cycle_day</name>
+    <title>Payment Plan Cycle Day</title>
+    <type>int unsigned</type>
+    <html>
+      <label>Payment Plan Cycle Day</label>
+    </html>
+  </field>
+  <field>
+    <name>payment_plan_auto_renew</name>
+    <title>Payment Plan Auto Renew?</title>
+    <type>int unsigned</type>
+    <html>
+      <label>Payment Plan Auto Renew?</label>
+    </html>
+  </field>
+  <field>
+    <name>payment_plan_financial_type</name>
+    <title>Payment Plan Financial Type</title>
+    <type>varchar</type>
+    <length>255</length>
+    <required>true</required>
+    <html>
+      <label>Payment Plan Financial Type</label>
+    </html>
+  </field>
+  <field>
+    <name>payment_plan_status</name>
+    <title>Payment Plan Status</title>
+    <type>varchar</type>
+    <length>255</length>
+    <html>
+      <label>Payment Plan Status</label>
+    </html>
+  </field>
+  <field>
+    <name>payment_plan_payment_method</name>
+    <title>Payment Plan Payment Method</title>
+    <type>varchar</type>
+    <length>255</length>
+    <required>true</required>
+    <html>
+      <label>Payment Plan Payment Method</label>
+    </html>
+  </field>
+  <field>
+    <name>payment_plan_is_active</name>
+    <title>Payment Plan Is Active?</title>
+    <type>int unsigned</type>
+    <html>
+      <label>Payment Plan Is Active?</label>
+    </html>
+  </field>
+
+  <field>
+    <name>membership_external_id</name>
+    <title>Membership External Id</title>
+    <type>varchar</type>
+    <length>255</length>
+    <html>
+      <label>Membership External Id</label>
+    </html>
+  </field>
+  <field>
+    <name>membership_type</name>
+    <title>Membership Type</title>
+    <type>varchar</type>
+    <length>255</length>
+    <html>
+      <label>Membership Type</label>
+    </html>
+  </field>
+  <field>
+    <name>membership_join_date</name>
+    <title>Membership Join Date</title>
+    <type>date</type>
+    <html>
+      <label>Membership Join Date</label>
+    </html>
+  </field>
+  <field>
+    <name>membership_start_date</name>
+    <title>Membership Start Date</title>
+    <type>date</type>
+    <html>
+      <label>Membership Start Date</label>
+    </html>
+  </field>
+  <field>
+    <name>membership_end_date</name>
+    <title>Membership End Date</title>
+    <type>date</type>
+    <html>
+      <label>Membership End Date</label>
+    </html>
+  </field>
+  <field>
+    <name>membership_status</name>
+    <title>Membership Status</title>
+    <type>varchar</type>
+    <length>255</length>
+    <html>
+      <label>Membership Status</label>
+    </html>
+  </field>
+  <field>
+    <name>membership_is_status_overridden</name>
+    <title>Membership Status Overridden?</title>
+    <type>int unsigned</type>
+    <length>255</length>
+    <html>
+      <label>Membership Status Overridden?</label>
+    </html>
+  </field>
+  <field>
+    <name>membership_status_override_end_date</name>
+    <title>Membership Status Override End Date</title>
+    <type>date</type>
+    <html>
+      <label>Membership Status Override End Date</label>
+    </html>
+  </field>
+
+  <field>
+    <name>contribution_external_id</name>
+    <title>Contribution External Id</title>
+    <type>varchar</type>
+    <length>255</length>
+    <required>true</required>
+    <html>
+      <label>Contribution External Id</label>
+    </html>
+  </field>
+  <field>
+    <name>contribution_financial_type</name>
+    <title>Contribution Financial Type</title>
+    <type>varchar</type>
+    <length>255</length>
+    <required>true</required>
+    <html>
+      <label>Contribution Financial Type</label>
+    </html>
+  </field>
+  <field>
+    <name>contribution_currency</name>
+    <title>Contribution Currency</title>
+    <type>varchar</type>
+    <length>255</length>
+    <required>true</required>
+    <html>
+      <label>Contribution Currency</label>
+    </html>
+  </field>
+  <field>
+    <name>contribution_payment_method</name>
+    <title>Contribution Payment Method</title>
+    <type>varchar</type>
+    <length>255</length>
+    <required>true</required>
+    <html>
+      <label>Contribution Payment Method</label>
+    </html>
+  </field>
+  <field>
+    <name>contribution_received_date</name>
+    <title>Contribution Received Date</title>
+    <type>date</type>
+    <html>
+      <label>Contribution Received Date</label>
+    </html>
+  </field>
+  <field>
+    <name>contribution_status</name>
+    <title>Contribution Status</title>
+    <type>varchar</type>
+    <length>255</length>
+    <html>
+      <label>Contribution Status</label>
+    </html>
+  </field>
+  <field>
+    <name>contribution_invoice_number</name>
+    <title>Contribution Invoice Number</title>
+    <type>varchar</type>
+    <length>255</length>
+    <html>
+      <label>Contribution Invoice Number</label>
+    </html>
+  </field>
+
+  <field>
+    <name>line_item_entity_table</name>
+    <title>Order Line Entity Type</title>
+    <type>varchar</type>
+    <length>255</length>
+    <required>true</required>
+    <html>
+      <label>Order Line Entity Type</label>
+    </html>
+  </field>
+  <field>
+    <name>line_item_entity_id</name>
+    <title>Order Line Entity Id</title>
+    <type>int unsigned</type>
+    <html>
+      <label>Order Line Entity Id</label>
+    </html>
+  </field>
+  <field>
+    <name>line_item_label</name>
+    <title>Order Line Label</title>
+    <type>varchar</type>
+    <length>255</length>
+    <html>
+      <label>Order Line Label</label>
+    </html>
+  </field>
+  <field>
+    <name>line_item_quantity</name>
+    <title>Order Line Quantity</title>
+    <type>int unsigned</type>
+    <html>
+      <label>Order Line Quantity</label>
+    </html>
+  </field>
+  <field>
+    <name>line_item_unit_price</name>
+    <title>Order Line Unit Price</title>
+    <type>decimal</type>
+    <required>true</required>
+    <html>
+      <label>Order Line Unit Price</label>
+    </html>
+  </field>
+  <field>
+    <name>line_item_financial_type</name>
+    <title>Order Line Financial Type</title>
+    <type>varchar</type>
+    <length>255</length>
+    <required>true</required>
+    <html>
+      <label>Order Line Financial Type</label>
+    </html>
+  </field>
+  <field>
+    <name>line_item_tax_amount</name>
+    <title>Order Line Tax Amount</title>
+    <type>decimal</type>
+    <html>
+      <label>Order Line Tax Amount</label>
+    </html>
+  </field>
+  <field>
+    <name>line_item_auto_renew</name>
+    <title>Order Line Auto Renew?</title>
+    <type>int unsigned</type>
+    <html>
+      <label>Order Line Auto Renew?</label>
+    </html>
+  </field>
+  <field>
+    <name>line_item_price_field_id</name>
+    <title>Order Line Price Field Id</title>
+    <type>int unsigned</type>
+    <html>
+      <label>Order Line Price Field Id</label>
+    </html>
+  </field>
+  <field>
+    <name>line_item_price_field_value_id</name>
+    <title>Order Line Price Field value Id</title>
+    <type>int unsigned</type>
+    <html>
+      <label>Order Line Price Field value Id</label>
+    </html>
+  </field>
+
+  <field>
+    <name>direct_debit_mandate_reference</name>
+    <title>Direct Debit Mandate Reference</title>
+    <type>varchar</type>
+    <length>255</length>
+    <html>
+      <label>Direct Debit Mandate Reference</label>
+    </html>
+  </field>
+  <field>
+    <name>direct_debit_mandate_bank_name</name>
+    <title>Direct Debit Mandate Bank Name</title>
+    <type>varchar</type>
+    <length>255</length>
+    <html>
+      <label>Direct Debit Mandate Bank Name</label>
+    </html>
+  </field>
+  <field>
+    <name>direct_debit_mandate_account_holder</name>
+    <title>Direct Debit Mandate Account Holder Name</title>
+    <type>varchar</type>
+    <length>255</length>
+    <html>
+      <label>Direct Debit Mandate Account Holder Name</label>
+    </html>
+  </field>
+  <field>
+    <name>direct_debit_mandate_account_number</name>
+    <title>Direct Debit Mandate Account Number</title>
+    <type>varchar</type>
+    <length>255</length>
+    <html>
+      <label>Direct Debit Mandate Account Number</label>
+    </html>
+  </field>
+  <field>
+    <name>direct_debit_mandate_sort_code</name>
+    <title>Direct Debit Mandate Sort Code</title>
+    <type>varchar</type>
+    <length>255</length>
+    <html>
+      <label>Direct Debit Mandate Sort Code</label>
+    </html>
+  </field>
+  <field>
+    <name>direct_debit_mandate_code</name>
+    <title>Direct Debit Mandate Code</title>
+    <type>varchar</type>
+    <length>255</length>
+    <html>
+      <label>Direct Debit Mandate Code</label>
+    </html>
+  </field>
+  <field>
+    <name>direct_debit_mandate_start_date</name>
+    <title>Direct Debit Mandate Start Date</title>
+    <type>date</type>
+    <html>
+      <label>Direct Debit Mandate Start Date</label>
+    </html>
+  </field>
+  <field>
+    <name>direct_debit_mandate_originator_number</name>
+    <title>Direct Debit Mandate Originator Number</title>
+    <type>varchar</type>
+    <length>255</length>
+    <html>
+      <label>Direct Debit Mandate Originator Number</label>
+    </html>
+  </field>
+</table>

@@ -1,0 +1,2 @@
+-- The MembershipextrasImporter entity is a fake entity just to get this extension to work with the CSV importer,
+-- so no need to create or delete any table and that is why this file is left empty.
