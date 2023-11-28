@@ -48,7 +48,7 @@ jobs:
       - name: Installing Membershipextras Importer API extension and its dependencies
         working-directory: ${{ env.CIVICRM_EXTENSIONS_DIR }}
         run: |
-          git clone --depth 1  -b CIWEMB-84-workstream https://github.com/compucorp/uk.co.compucorp.membershipextras.git
+          git clone --depth 1 https://github.com/compucorp/uk.co.compucorp.membershipextras.git
           git clone --depth 1 https://github.com/compucorp/uk.co.compucorp.manualdirectdebit.git
           git clone --depth 1 https://github.com/compucorp/io.compuco.multicompanyaccounting.git
           git clone --depth 1 https://github.com/compucorp/io.compuco.automateddirectdebit.git
