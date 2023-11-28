@@ -11,7 +11,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContributionTest exten
   private $sampleRowData = [
     'payment_plan_external_id' => 'test1',
     'payment_plan_payment_processor' => 'Offline Recurring Contribution',
-    'payment_plan_frequency' => 'month',
+    'payment_plan_frequency' => 'monthly',
     'payment_plan_next_contribution_date' => '20210101000000',
     'payment_plan_start_date' => '20200101000000',
     'payment_plan_create_date' => '20190101000000',
@@ -84,7 +84,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContributionTest exten
 
   public function testImportYearlyRecurContributionWillSetCorrectFrequencyInformation() {
     $this->sampleRowData['payment_plan_external_id'] = 'test6';
-    $this->sampleRowData['payment_plan_frequency'] = 'year';
+    $this->sampleRowData['payment_plan_frequency'] = 'annual';
 
     $recurContributionImporter = new RecurContributionImporter($this->sampleRowData, $this->contactId);
     $newRecurContributionId = $recurContributionImporter->import();
@@ -237,7 +237,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContributionTest exten
 
   public function testImportYearlyRecurContributionWillNotSetCycleDay() {
     $this->sampleRowData['payment_plan_external_id'] = 'test19';
-    $this->sampleRowData['payment_plan_frequency'] = 'year';
+    $this->sampleRowData['payment_plan_frequency'] = 'annual';
 
     $recurContributionImporter = new RecurContributionImporter($this->sampleRowData, $this->contactId);
     $newRecurContributionId = $recurContributionImporter->import();
@@ -249,7 +249,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContributionTest exten
 
   public function testImportMonthlyRecurContributionWithNoCycleDayWillThrowAnException() {
     $this->sampleRowData['payment_plan_external_id'] = 'test20';
-    $this->sampleRowData['payment_plan_frequency'] = 'month';
+    $this->sampleRowData['payment_plan_frequency'] = 'monthly';
     unset($this->sampleRowData['payment_plan_cycle_day']);
 
     $this->expectException(CRM_Membershipextrasimporterapi_Exception_InvalidRecurContributionFieldException::class);
@@ -261,7 +261,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContributionTest exten
 
   public function testImportMonthlyRecurContributionWithCycleDayLessThanOneWillThrowAnException() {
     $this->sampleRowData['payment_plan_external_id'] = 'test21';
-    $this->sampleRowData['payment_plan_frequency'] = 'month';
+    $this->sampleRowData['payment_plan_frequency'] = 'monthly';
     $this->sampleRowData['payment_plan_cycle_day'] = -1;
 
     $this->expectException(CRM_Membershipextrasimporterapi_Exception_InvalidRecurContributionFieldException::class);
@@ -273,7 +273,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContributionTest exten
 
   public function testImportMonthlyRecurContributionWithCycleDayEqual28WillThrowAnException() {
     $this->sampleRowData['payment_plan_external_id'] = 'test22';
-    $this->sampleRowData['payment_plan_frequency'] = 'month';
+    $this->sampleRowData['payment_plan_frequency'] = 'monthly';
     $this->sampleRowData['payment_plan_cycle_day'] = 28;
 
     $this->expectException(CRM_Membershipextrasimporterapi_Exception_InvalidRecurContributionFieldException::class);
@@ -285,7 +285,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContributionTest exten
 
   public function testImportMonthlyRecurContributionWithCycleDayLargerThan28WillThrowAnException() {
     $this->sampleRowData['payment_plan_external_id'] = 'test23';
-    $this->sampleRowData['payment_plan_frequency'] = 'month';
+    $this->sampleRowData['payment_plan_frequency'] = 'monthly';
     $this->sampleRowData['payment_plan_cycle_day'] = 29;
 
     $this->expectException(CRM_Membershipextrasimporterapi_Exception_InvalidRecurContributionFieldException::class);
@@ -297,7 +297,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContributionTest exten
 
   public function testImportMonthlyRecurContributionWillSetCorrectCycleDayValue() {
     $this->sampleRowData['payment_plan_external_id'] = 'test24';
-    $this->sampleRowData['payment_plan_frequency'] = 'month';
+    $this->sampleRowData['payment_plan_frequency'] = 'monthly';
 
     $recurContributionImporter = new RecurContributionImporter($this->sampleRowData, $this->contactId);
     $newRecurContributionId = $recurContributionImporter->import();
@@ -383,17 +383,6 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContributionTest exten
     $expectedDate = $expectedDate->format('Y-m-d H:i:s');
 
     $this->assertEquals($expectedDate, $newRecurContribution['next_sched_contribution_date']);
-  }
-
-  public function testImportWithNoNextContributionDateWillThrowAnException() {
-    $this->sampleRowData['payment_plan_external_id'] = 'test30';
-    unset($this->sampleRowData['payment_plan_next_contribution_date']);
-
-    $this->expectException(CRM_Membershipextrasimporterapi_Exception_InvalidRecurContributionFieldException::class);
-    $this->expectExceptionCode(800);
-
-    $recurContributionImporter = new RecurContributionImporter($this->sampleRowData, $this->contactId);
-    $recurContributionImporter->import();
   }
 
   public function testImportWithInvalidCurrencyThrowAnException() {
@@ -530,7 +519,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContributionTest exten
     $updatedSampleRowData = [
       'payment_plan_external_id' => 'test38',
       'payment_plan_payment_processor' => 'Offline Recurring Contribution',
-      'payment_plan_frequency' => 'year',
+      'payment_plan_frequency' => 'annual',
       'payment_plan_next_contribution_date' => '20220101000000',
       'payment_plan_start_date' => '20210101000000',
       'payment_plan_create_date' => '20200101000000',
@@ -574,6 +563,54 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContributionTest exten
     ];
 
     $this->assertEquals($expectedResult, $actualResult);
+  }
+
+  public function testThatEitherPaymentSchemeOrPaymentPlanFrequencyIsRequired() {
+    $this->sampleRowData['payment_plan_external_id'] = 'test39';
+    unset($this->sampleRowData['payment_plan_frequency']);
+
+    $this->expectException(CRM_Membershipextrasimporterapi_Exception_InvalidRecurContributionFieldException::class);
+    $this->expectExceptionCode(1300);
+
+    $recurContributionImporter = new RecurContributionImporter($this->sampleRowData, $this->contactId);
+    $recurContributionImporter->import();
+  }
+
+  public function testThatNextContributionDateIsRequiredIfPaymentFrequencyIsUsed() {
+    $this->sampleRowData['payment_plan_external_id'] = 'test40';
+    unset($this->sampleRowData['payment_plan_next_contribution_date']);
+
+    $this->expectException(CRM_Membershipextrasimporterapi_Exception_InvalidRecurContributionFieldException::class);
+    $this->expectExceptionCode(1400);
+
+    $recurContributionImporter = new RecurContributionImporter($this->sampleRowData, $this->contactId);
+    $recurContributionImporter->import();
+  }
+
+  public function testPaymentSchemeWillBeSetCorrectly() {
+    $this->sampleRowData['payment_plan_external_id'] = 'test41';
+    unset($this->sampleRowData['payment_plan_frequency']);
+
+    $paymentScheme = CRM_MembershipExtras_BAO_PaymentScheme::create([
+      'name' => 'Test scheme',
+      'admin_title' => 'Admin title',
+      'public_title' => 'Public title',
+      'public_description' => 'Public description',
+      'permission' => 'public',
+      'enabled' => TRUE,
+      'parameters' => '{}',
+      'payment_processor' => 1,
+    ]);
+    $this->sampleRowData['payment_plan_payment_scheme_id'] = $paymentScheme->id;
+
+    $recurContributionImporter = new RecurContributionImporter($this->sampleRowData, $this->contactId);
+    $newRecurContributionId = $recurContributionImporter->import();
+
+    $sqlQuery = "SELECT payment_scheme_id FROM civicrm_value_payment_plan_extra_attributes WHERE entity_id = {$newRecurContributionId}";
+    $result = CRM_Core_DAO::executeQuery($sqlQuery);
+    $result->fetch();
+
+    $this->assertEquals($paymentScheme->id, $result->payment_scheme_id);
   }
 
   private function getRecurContributionsByContactId($contactId) {

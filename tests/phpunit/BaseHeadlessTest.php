@@ -12,6 +12,7 @@ abstract class BaseHeadlessTest extends \PHPUnit\Framework\TestCase implements H
     return \Civi\Test::headless()
       ->install('uk.co.compucorp.membershipextras')
       ->install('uk.co.compucorp.manualdirectdebit')
+      ->install('io.compuco.automateddirectdebit')
       ->installMe(__DIR__)
       ->apply();
   }

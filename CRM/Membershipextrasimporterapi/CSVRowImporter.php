@@ -5,7 +5,8 @@ use CRM_Membershipextrasimporterapi_EntityImporter_Membership as MembershipImpor
 use CRM_Membershipextrasimporterapi_EntityImporter_Contribution as ContributionImporter;
 use CRM_Membershipextrasimporterapi_EntityCreator_MembershipPayment as MembershipPaymentCreator;
 use CRM_Membershipextrasimporterapi_EntityImporter_LineItem as LineItemImporter;
-use CRM_Membershipextrasimporterapi_EntityImporter_DirectDebitMandate as DirectDebitMandateImporter;
+use CRM_Membershipextrasimporterapi_EntityImporter_ManualDirectDebitMandate as ManualDirectDebitMandateImporter;
+use CRM_Membershipextrasimporterapi_EntityImporter_ExternalDirectDebitMandate as ExternalDirectDebitMandateImporter;
 use CRM_Membershipextrasimporterapi_Helper_SQLQueryRunner as SQLQueryRunner;
 
 class CRM_Membershipextrasimporterapi_CSVRowImporter {
@@ -39,8 +40,11 @@ class CRM_Membershipextrasimporterapi_CSVRowImporter {
       $lineItemImporter = new LineItemImporter($this->rowData, $contributionId, $membershipId, $recurContributionId);
       $lineItemImporter->import();
 
-      $mandateImporter = new DirectDebitMandateImporter($this->rowData, $this->contactId, $recurContributionId, $contributionId);
-      $mandateImporter->import();
+      $manualMandateImporter = new ManualDirectDebitMandateImporter($this->rowData, $this->contactId, $recurContributionId, $contributionId);
+      $manualMandateImporter->import();
+
+      $externalMandateImporter = new ExternalDirectDebitMandateImporter($this->rowData, $recurContributionId);
+      $externalMandateImporter->import();
 
       $transaction->commit();
     }
@@ -52,8 +56,6 @@ class CRM_Membershipextrasimporterapi_CSVRowImporter {
   }
 
   private function getContactId() {
-    $contactId = NULL;
-
     if (!empty($this->rowData['contact_id'])) {
       $sqlQuery = "SELECT id FROM civicrm_contact WHERE id = %1";
       $result = SQLQueryRunner::executeQuery($sqlQuery, [1 => [$this->rowData['contact_id'], 'Integer']]);

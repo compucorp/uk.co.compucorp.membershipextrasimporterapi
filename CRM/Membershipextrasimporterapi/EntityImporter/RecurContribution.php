@@ -22,6 +22,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContribution {
 
   public function import() {
     $this->validateIfDirectDebitPaymentPlan();
+    $this->validateIfEitherPaymentSchemeOrPaymentFrequencyIsSet();
 
     $recurContributionId = $this->getRecurContributionIdIfExist();
     if ($recurContributionId) {
@@ -31,7 +32,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContribution {
       $recurContributionId = $this->createNewRecurContribution();
     }
 
-    $this->setActiveStatus($recurContributionId);
+    $this->setExtraAttributesCustomGroupValues($recurContributionId);
 
     return $recurContributionId;
   }
@@ -93,6 +94,25 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContribution {
   }
 
   /**
+   * Payment plan instalments should be either paid using
+   * a payment scheme, or using one of the traditional
+   * instalment frequencies (monthly, quarterly, annual).
+   * Furthermore, If the latter is used then the "Next contribution date"
+   * should be available too.
+   *
+   * @return void
+   */
+  private function validateIfEitherPaymentSchemeOrPaymentFrequencyIsSet() {
+    if (empty($this->rowData['payment_plan_payment_scheme_id']) && empty($this->rowData['payment_plan_frequency'])) {
+      throw new CRM_Membershipextrasimporterapi_Exception_InvalidRecurContributionFieldException('The Payment plan payment scheme id or alternatively the payment plan frequency should be set.', 1300);
+    }
+
+    if (!empty($this->rowData['payment_plan_frequency']) && empty($this->rowData['payment_plan_next_contribution_date'])) {
+      throw new CRM_Membershipextrasimporterapi_Exception_InvalidRecurContributionFieldException('The payment plan next contribution data is required for non payment scheme payment plans.', 1400);
+    }
+  }
+
+  /**
    * Prepares the sql parameters
    * that will be used to create recur
    * contribution record.
@@ -112,7 +132,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContribution {
     $cycleDay = $this->getCycleDay($frequencyParams['unit']);
     $startDate = $this->formatRowDate('payment_plan_start_date', 'Start Date');
     $createDate = $this->formatRowDate('payment_plan_create_date', 'Create Date');
-    $nextContributionDate = $this->formatRowDate('payment_plan_next_contribution_date', 'Next Contribution Date', TRUE);
+    $nextContributionDate = $this->formatRowDate('payment_plan_next_contribution_date', 'Next Contribution Date');
 
     return [
       1 => [$this->contactId, 'Integer'],
@@ -151,21 +171,39 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContribution {
   }
 
   private function calculateFrequencyParameters() {
+    if (!empty($this->rowData['payment_plan_payment_scheme_id'])) {
+      // defaulting these parameters to 1 year if payment scheme
+      // is used, but in reality whatever values we use here
+      // it won't matter, given these values are not used
+      // with payment plans linked to payment schemes.
+      $frequencyParameters['unit'] = 'year';
+      $frequencyParameters['interval'] = 1;
+      $frequencyParameters['installments_count'] = 1;
+
+      return $frequencyParameters;
+    }
+
     switch ($this->rowData['payment_plan_frequency']) {
-      case 'month':
+      case 'monthly':
         $frequencyParameters['unit'] = 'month';
         $frequencyParameters['interval'] = 1;
         $frequencyParameters['installments_count'] = 12;
         break;
 
-      case 'year':
+      case 'quarterly':
+        $frequencyParameters['unit'] = 'month';
+        $frequencyParameters['interval'] = 3;
+        $frequencyParameters['installments_count'] = 4;
+        break;
+
+      case 'annual':
         $frequencyParameters['unit'] = 'year';
         $frequencyParameters['interval'] = 1;
         $frequencyParameters['installments_count'] = 1;
         break;
 
       default:
-        throw new CRM_Membershipextrasimporterapi_Exception_InvalidRecurContributionFieldException('Payment Plan Frequency should be either "month" or "year"', 100);
+        throw new CRM_Membershipextrasimporterapi_Exception_InvalidRecurContributionFieldException('Payment Plan Frequency should be "monthly", "quarterly" or "annual"', 100);
     }
 
     return $frequencyParameters;
@@ -304,16 +342,21 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContribution {
     return $date;
   }
 
-  private function setActiveStatus($recurContributionId) {
+  private function setExtraAttributesCustomGroupValues($recurContributionId) {
     $isActive = 0;
     if (!empty($this->rowData['payment_plan_is_active'])) {
       $isActive = 1;
     }
 
+    $paymentSchemeId = 'NULL';
+    if (!empty($this->rowData['payment_plan_payment_scheme_id'])) {
+      $paymentSchemeId = $this->rowData['payment_plan_payment_scheme_id'];
+    }
+
     $activationQuery = "
       INSERT INTO civicrm_value_payment_plan_extra_attributes
-      (entity_id, is_active) VALUES ({$recurContributionId}, {$isActive})
-      ON DUPLICATE KEY UPDATE is_active = {$isActive}
+      (entity_id, is_active, payment_scheme_id) VALUES ({$recurContributionId}, {$isActive}, {$paymentSchemeId})
+      ON DUPLICATE KEY UPDATE is_active = {$isActive}, payment_scheme_id = {$paymentSchemeId}
      ";
     SQLQueryRunner::executeQuery($activationQuery);
   }

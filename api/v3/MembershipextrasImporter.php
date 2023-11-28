@@ -45,13 +45,16 @@ function _civicrm_api3_membershipextras_importer_create_spec(&$params) {
   $params['payment_plan_frequency'] = [
     'title' => 'Payment Plan Frequency',
     'type' => CRM_Utils_Type::T_STRING,
-    'api.required' => 1,
   ];
 
   $params['payment_plan_next_contribution_date'] = [
     'title' => 'Payment Plan Next Contribution Date',
     'type' => CRM_Utils_Type::T_DATE,
-    'api.required' => 1,
+  ];
+
+  $params['payment_plan_payment_scheme_id'] = [
+    'title' => 'Payment Plan Payment Scheme id',
+    'type' => CRM_Utils_Type::T_INT,
   ];
 
   $params['payment_plan_start_date'] = [
@@ -178,6 +181,11 @@ function _civicrm_api3_membershipextras_importer_create_spec(&$params) {
     'type' => CRM_Utils_Type::T_STRING,
   ];
 
+  $params['contribution_owner_org_id'] = [
+    'title' => 'Contribution Owner organisation Id - For Multicompany accounting use only',
+    'type' => CRM_Utils_Type::T_INT,
+  ];
+
   // Line Item
   $params['line_item_entity_table'] = [
     'title' => 'Order Line Entity Type',
@@ -232,7 +240,7 @@ function _civicrm_api3_membershipextras_importer_create_spec(&$params) {
     'type' => CRM_Utils_Type::T_INT,
   ];
 
-  // Direct Debit Mandate
+  // Manual Direct Debit Mandate
   $params['direct_debit_mandate_reference'] = [
     'title' => 'Direct Debit Mandate Reference',
     'type' => CRM_Utils_Type::T_STRING,
@@ -271,5 +279,21 @@ function _civicrm_api3_membershipextras_importer_create_spec(&$params) {
   $params['direct_debit_mandate_originator_number'] = [
     'title' => 'Direct Debit Mandate Originator Number',
     'type' => CRM_Utils_Type::T_STRING,
+  ];
+
+  // External Direct Debit fields
+  $params['external_direct_debit_mandate_id'] = [
+    'title' => 'External Direct Debit Mandate Id',
+    'type' => CRM_Utils_Type::T_STRING,
+  ];
+
+  $params['external_direct_debit_mandate_status'] = [
+    'title' => 'External Direct Debit Mandate Status',
+    'type' => CRM_Utils_Type::T_STRING,
+  ];
+
+  $params['external_direct_debit_next_available_payment_date'] = [
+    'title' => 'External Direct Debit Next Available Payment Date',
+    'type' => CRM_Utils_Type::T_DATE,
   ];
 }

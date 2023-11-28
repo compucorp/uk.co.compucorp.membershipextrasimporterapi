@@ -2,7 +2,7 @@
 
 use CRM_Membershipextrasimporterapi_Helper_SQLQueryRunner as SQLQueryRunner;
 
-class CRM_Membershipextrasimporterapi_EntityImporter_DirectDebitMandate {
+class CRM_Membershipextrasimporterapi_EntityImporter_ManualDirectDebitMandate {
 
   private $rowData;
 
@@ -22,7 +22,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_DirectDebitMandate {
   }
 
   public function import() {
-    if (!$this->isDirectDebitPaymentProcessor()) {
+    if (!$this->isManualDirectDebitPaymentProcessor()) {
       return NULL;
     }
 
@@ -41,13 +41,13 @@ class CRM_Membershipextrasimporterapi_EntityImporter_DirectDebitMandate {
       SQLQueryRunner::executeQuery($sql);
     }
     else {
-      $sql = "INSERT INTO `dd_contribution_recurr_mandate_ref` (`recurr_id` , `mandate_id`) 
+      $sql = "INSERT INTO `dd_contribution_recurr_mandate_ref` (`recurr_id` , `mandate_id`)
            VALUES ({$this->recurContributionId} , {$mandateId})";
       SQLQueryRunner::executeQuery($sql);
     }
 
     if ($this->isDirectDebitContribution() && !$this->isMandateContributionRefExist($mandateId)) {
-      $sql = "INSERT INTO `civicrm_value_dd_information` (`mandate_id` , `entity_id`) 
+      $sql = "INSERT INTO `civicrm_value_dd_information` (`mandate_id` , `entity_id`)
            VALUES ({$mandateId} , {$this->contributionId})";
       SQLQueryRunner::executeQuery($sql);
     }
@@ -55,7 +55,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_DirectDebitMandate {
     return $mandateId;
   }
 
-  private function isDirectDebitPaymentProcessor() {
+  private function isManualDirectDebitPaymentProcessor() {
     if ($this->rowData['payment_plan_payment_processor'] == 'Direct Debit') {
       return TRUE;
     }
@@ -86,17 +86,17 @@ class CRM_Membershipextrasimporterapi_EntityImporter_DirectDebitMandate {
   private function updateMandate($mandateId) {
     $sqlParams = $this->prepareSqlParams();
     $sqlParams[10] = [$mandateId, 'Integer'];
-    $sqlQuery = "UPDATE `civicrm_value_dd_mandate` SET  
-                `entity_id` = %1, `bank_name` = %2, `account_holder_name` = %3, `ac_number` = %4, `sort_code` = %5, 
-                `dd_code` = %6, `dd_ref` = %7, `start_date` = %8, `originator_number` = %9  
+    $sqlQuery = "UPDATE `civicrm_value_dd_mandate` SET
+                `entity_id` = %1, `bank_name` = %2, `account_holder_name` = %3, `ac_number` = %4, `sort_code` = %5,
+                `dd_code` = %6, `dd_ref` = %7, `start_date` = %8, `originator_number` = %9
                 WHERE id = %10";
     SQLQueryRunner::executeQuery($sqlQuery, $sqlParams);
   }
 
   private function createMandate() {
     $sqlParams = $this->prepareSqlParams();
-    $sql = "INSERT INTO civicrm_value_dd_mandate 
-            (entity_id, bank_name, account_holder_name, ac_number, sort_code, dd_code, dd_ref, start_date, originator_number) 
+    $sql = "INSERT INTO civicrm_value_dd_mandate
+            (entity_id, bank_name, account_holder_name, ac_number, sort_code, dd_code, dd_ref, start_date, originator_number)
             VALUES (%1, %2, %3, %4, %5, %6, %7, %8, %9)";
     SQLQueryRunner::executeQuery($sql, $sqlParams);
 
@@ -106,7 +106,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_DirectDebitMandate {
   }
 
   private function isRecurContributionAttachedToAnyMandate() {
-    $sql = "SELECT mandate_id FROM dd_contribution_recurr_mandate_ref  
+    $sql = "SELECT mandate_id FROM dd_contribution_recurr_mandate_ref
             WHERE recurr_id = {$this->recurContributionId}";
     $dao = SQLQueryRunner::executeQuery($sql);
 
@@ -127,7 +127,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_DirectDebitMandate {
   }
 
   private function isMandateContributionRefExist($mandateId) {
-    $sql = "SELECT mandate_id FROM civicrm_value_dd_information  
+    $sql = "SELECT mandate_id FROM civicrm_value_dd_information
             WHERE mandate_id = %1 AND entity_id = %2";
     $dao = SQLQueryRunner::executeQuery($sql, [
       1 => [$mandateId, 'Integer'],
@@ -234,8 +234,8 @@ class CRM_Membershipextrasimporterapi_EntityImporter_DirectDebitMandate {
     }
 
     if (!isset($this->cachedValues['originator_numbers'])) {
-      $sqlQuery = "SELECT cov.name as name, cov.value as id FROM civicrm_option_value cov 
-                  INNER JOIN civicrm_option_group cog ON cov.option_group_id = cog.id 
+      $sqlQuery = "SELECT cov.name as name, cov.value as id FROM civicrm_option_value cov
+                  INNER JOIN civicrm_option_group cog ON cov.option_group_id = cog.id
                   WHERE cog.name = 'direct_debit_originator_number'";
       $result = SQLQueryRunner::executeQuery($sqlQuery);
       while ($result->fetch()) {
@@ -252,7 +252,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_DirectDebitMandate {
 
   private function formatRowDate($dateColumnName, $columnLabel, $isRequired = FALSE) {
     if ($isRequired && empty($this->rowData[$dateColumnName])) {
-      throw new CRM_Membershipextrasimporterapi_Exception_InvalidDirectDebitMandateException("Direct Debit Mandate '{$columnLabel}' is required field.", 1200);
+      throw new CRM_Membershipextrasimporterapi_Exception_InvalidDirectDebitMandateException("Manual Direct Debit Mandate '{$columnLabel}' is required field.", 1200);
     }
 
     if (!empty($this->rowData[$dateColumnName])) {
