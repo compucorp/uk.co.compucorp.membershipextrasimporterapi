@@ -358,14 +358,14 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItem {
     $toFinancialAccountId = $this->getFinancialAccountIdByRelationship($mappedLineItemParams['financial_type_id'], $incomeAccountRelationshipId);
 
     $sqlParams = [
-      1 => [$this->contribution['contact_id'], 'Integer'],
+      1 => [intval($this->contribution['contact_id']), 'Integer'],
       2 => [$mappedLineItemParams['line_item_label'], 'String'],
       3 => [$mappedLineItemParams['line_total'], 'Money'],
       4 => [$this->contribution['currency'], 'String'],
-      5 => [$toFinancialAccountId, 'Integer'],
-      6 => [$this->getFinancialItemStatusId(), 'Integer'],
+      5 => [intval($toFinancialAccountId), 'Integer'],
+      6 => [intval($this->getFinancialItemStatusId()), 'Integer'],
       7 => ['civicrm_line_item', 'String'],
-      8 => [$lineItemId, 'Integer'],
+      8 => [intval($lineItemId), 'Integer'],
       9 => [$this->contribution['receive_date'], 'String'],
     ];
     $sqlQuery = "INSERT INTO `civicrm_financial_item` (`contact_id` , `description` , `amount` , `currency` ,
@@ -384,15 +384,19 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItem {
     $salesTaxAccountRelationshipId = 10;
     $toFinancialAccountId = $this->getFinancialAccountIdByRelationship($mappedLineItemParams['financial_type_id'], $salesTaxAccountRelationshipId);
 
+    if (empty($toFinancialAccountId)) {
+      throw new CRM_Membershipextrasimporterapi_Exception_InvalidLineItemException('Line Item has tax amount but Financial type has no sales tax account', 300);
+    }
+
     $sqlParams = [
-      1 => [$this->contribution['contact_id'], 'Integer'],
+      1 => [intval($this->contribution['contact_id']), 'Integer'],
       2 => ['Sales Tax', 'String'],
       3 => [$mappedLineItemParams['tax_amount'], 'Money'],
       4 => [$this->contribution['currency'], 'String'],
-      5 => [$toFinancialAccountId, 'Integer'],
-      6 => [$this->getFinancialItemStatusId(), 'Integer'],
+      5 => [intval($toFinancialAccountId), 'Integer'],
+      6 => [intval($this->getFinancialItemStatusId()), 'Integer'],
       7 => ['civicrm_line_item', 'String'],
-      8 => [$lineItemId, 'Integer'],
+      8 => [intval($lineItemId), 'Integer'],
       9 => [$this->contribution['receive_date'], 'String'],
     ];
     $sqlQuery = "INSERT INTO `civicrm_financial_item` (`contact_id` , `description` , `amount` , `currency` ,
