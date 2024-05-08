@@ -300,7 +300,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Contribution {
       return;
     }
 
-    $sqlQuery = "INSERT INTO `civicrm_value_multicompanyaccounting_ownerorg` (`entity_id` , `owner_organization`)
+    $sqlQuery = "INSERT INTO `civicrm_value_financeextras_contribution_ownerorg` (`entity_id` , `owner_organization`)
            VALUES ({$contributionId}, %1)";
     SQLQueryRunner::executeQuery($sqlQuery, [1 => [$this->rowData['contribution_owner_org_id'], 'Integer']]);
   }
