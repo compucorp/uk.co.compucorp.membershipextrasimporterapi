@@ -255,9 +255,9 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContribution {
 
     $paymentProcessorName = $this->rowData['payment_plan_payment_processor'];
     if (!empty($this->cachedValues['payment_processors'][$paymentProcessorName])) {
-      $offlinePaymentProcessorClassName = 'Payment_Manual';
-      if ($this->cachedValues['payment_processors'][$paymentProcessorName]['class_name'] != $offlinePaymentProcessorClassName) {
-        throw new CRM_Membershipextrasimporterapi_Exception_InvalidRecurContributionFieldException('Only Manual payment plan "Payment Processors"', 1200);
+      $supportedPaymentProcessorClassname = ['Payment_Manual', 'Payment_GoCardless'];
+      if (!in_array($this->cachedValues['payment_processors'][$paymentProcessorName]['class_name'], $supportedPaymentProcessorClassname)) {
+        throw new CRM_Membershipextrasimporterapi_Exception_InvalidRecurContributionFieldException('Only GoCardless and Manual payment plan "Payment Processors"', 1200);
       }
 
       return $this->cachedValues['payment_processors'][$paymentProcessorName]['id'];

@@ -184,13 +184,13 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Contribution {
   }
 
   private function getContributionStatusId() {
-    $statusName = 'Completed';
+    $statusName = 'completed';
     if (!empty($this->rowData['contribution_status'])) {
-      $statusName = $this->rowData['contribution_status'];
+      $statusName = strtolower($this->rowData['contribution_status']);
     }
 
     if (!isset($this->cachedValues['contribution_statuses'])) {
-      $sqlQuery = "SELECT cov.name as name, cov.value as id FROM civicrm_option_value cov
+      $sqlQuery = "SELECT LOWER(cov.name) as name, cov.value as id FROM civicrm_option_value cov
                   INNER JOIN civicrm_option_group cog ON cov.option_group_id = cog.id
                   WHERE cog.name = 'contribution_status'";
       $result = SQLQueryRunner::executeQuery($sqlQuery);
@@ -300,7 +300,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Contribution {
       return;
     }
 
-    $sqlQuery = "INSERT INTO `civicrm_value_multicompanyaccounting_ownerorg` (`entity_id` , `owner_organization`)
+    $sqlQuery = "INSERT INTO `civicrm_value_financeextras_contribution_ownerorg` (`entity_id` , `owner_organization`)
            VALUES ({$contributionId}, %1)";
     SQLQueryRunner::executeQuery($sqlQuery, [1 => [$this->rowData['contribution_owner_org_id'], 'Integer']]);
   }

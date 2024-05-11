@@ -347,7 +347,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_ContributionTest extends Ba
 
   public function testImportWillSetOwnerOrgIdIfItIsAvailable() {
     civicrm_api3('Extension', 'install', [
-      'keys' => "io.compuco.multicompanyaccounting",
+      'keys' => "io.compuco.financeextras",
     ]);
 
     $this->sampleRowData['contribution_external_id'] = 'test24';
@@ -356,13 +356,13 @@ class CRM_Membershipextrasimporterapi_EntityImporter_ContributionTest extends Ba
     $contributionImporter = new ContributionImporter($this->sampleRowData, $this->contactId, $this->recurContributionId);
     $newContributionId = $contributionImporter->import();
 
-    $sqlQuery = "SELECT owner_organization FROM civicrm_value_multicompanyaccounting_ownerorg WHERE entity_id = {$newContributionId}";
+    $sqlQuery = "SELECT owner_organization FROM civicrm_value_financeextras_contribution_ownerorg WHERE entity_id = {$newContributionId}";
     $storedOwnerOrgID = CRM_Core_DAO::singleValueQuery($sqlQuery);
 
     $this->assertEquals($this->contactId, $storedOwnerOrgID);
 
     civicrm_api3('Extension', 'disable', [
-      'keys' => "io.compuco.multicompanyaccounting",
+      'keys' => "io.compuco.financeextras",
     ]);
   }
 
