@@ -210,13 +210,13 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContribution {
   }
 
   private function getRecurContributionStatusId() {
-    $statusName = 'Completed';
+    $statusName = 'completed';
     if (!empty($this->rowData['payment_plan_status'])) {
-      $statusName = $this->rowData['payment_plan_status'];
+      $statusName = strtolower($this->rowData['payment_plan_status']);
     }
 
     if (!isset($this->cachedValues['recur_contribution_statuses'])) {
-      $sqlQuery = "SELECT cov.name as name, cov.value as id FROM civicrm_option_value cov
+      $sqlQuery = "SELECT LOWER(cov.name) as name, cov.value as id FROM civicrm_option_value cov
                   INNER JOIN civicrm_option_group cog ON cov.option_group_id = cog.id
                   WHERE cog.name = 'contribution_recur_status'";
       $result = SQLQueryRunner::executeQuery($sqlQuery);
