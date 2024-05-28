@@ -154,17 +154,17 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Contribution {
 
   private function getCurrency() {
     if (!isset($this->cachedValues['currencies_enabled'])) {
-      $sqlQuery = "SELECT cov.name as name, cov.value as id FROM civicrm_option_value cov
+      $sqlQuery = "SELECT cov.name as name, LOWER(cov.value) as value, cov.value as id FROM civicrm_option_value cov
                   INNER JOIN civicrm_option_group cog ON cov.option_group_id = cog.id
                   WHERE cog.name = 'currencies_enabled'";
       $result = SQLQueryRunner::executeQuery($sqlQuery);
       while ($result->fetch()) {
-        $this->cachedValues['currencies_enabled'][$result->name] = $result->id;
+        $this->cachedValues['currencies_enabled'][$result->value] = $result->id;
       }
     }
 
-    if (!empty($this->cachedValues['currencies_enabled'][$this->rowData['contribution_currency']])) {
-      return $this->cachedValues['currencies_enabled'][$this->rowData['contribution_currency']];
+    if (!empty($this->cachedValues['currencies_enabled'][strtolower($this->rowData['contribution_currency'])])) {
+      return $this->cachedValues['currencies_enabled'][strtolower($this->rowData['contribution_currency'])];
     }
 
     throw new CRM_Membershipextrasimporterapi_Exception_InvalidContributionFieldException('Invalid or disabled contribution "currency"', 400);
