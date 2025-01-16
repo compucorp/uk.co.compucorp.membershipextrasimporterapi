@@ -67,7 +67,6 @@ class CRM_Membershipextrasimporterapi_EntityImporter_ExternalDirectDebitMandateT
   public function testNoMandateWillBeCreatedIfAnyMainMandateFieldIsMissing() {
     $rowData = [
       'external_direct_debit_mandate_id' => 'TEST_X13',
-      'external_direct_debit_next_available_payment_date' => '20230101000000',
     ];
 
     foreach ($rowData as $fieldName => $rowValue) {
