@@ -219,6 +219,19 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Contribution {
     }
 
     if (CRM_Invoicing_Utils::isInvoicingEnabled()) {
+      if (!empty($this->rowData['contribution_owner_org_id'])) {
+        $orgInvoicePrefixQuery = 'SELECT id, invoice_prefix, next_invoice_number FROM financeextras_company WHERE contact_id = %1';
+        $orgInvoicePrefixQueryParams[1] = [$this->rowData['contribution_owner_org_id'], 'Integer'];
+        $orgInvoicePrefix = CRM_Core_DAO::executeQuery($orgInvoicePrefixQuery, $orgInvoicePrefixQueryParams);
+        if (
+          $orgInvoicePrefix->fetch() &&
+          !empty($orgInvoicePrefix->invoice_prefix) &&
+          $this->updateOrganizationNextInvoiceNumber($orgInvoicePrefix)
+        ) {
+          return $orgInvoicePrefix->invoice_prefix . $orgInvoicePrefix->next_invoice_number;
+        }
+      }
+
       $nextContributionID = CRM_Core_DAO::singleValueQuery('SELECT COALESCE(MAX(id) + 1, 1) FROM civicrm_contribution');
       return CRM_Contribute_BAO_Contribution::getInvoiceNumber($nextContributionID);
     }
@@ -303,6 +316,30 @@ class CRM_Membershipextrasimporterapi_EntityImporter_Contribution {
     $sqlQuery = "INSERT INTO `civicrm_value_financeextras_contribution_ownerorg` (`entity_id` , `owner_organization`)
            VALUES ({$contributionId}, %1)";
     SQLQueryRunner::executeQuery($sqlQuery, [1 => [$this->rowData['contribution_owner_org_id'], 'Integer']]);
+  }
+
+  private function updateOrganizationNextInvoiceNumber($org): bool {
+    if (!is_object($org) || empty($org->id) || empty($org->next_invoice_number)) {
+      return FALSE;
+    }
+
+    try {
+      $firstZeroLocation  = strpos($org->next_invoice_number, '0');
+      $isThereLeadingZero = $firstZeroLocation === 0;
+      if ($isThereLeadingZero) {
+        $invoiceNumberCharCount = strlen($org->next_invoice_number);
+        $invoiceUpdateFormula   = "LPAD((next_invoice_number + 1), {$invoiceNumberCharCount}, '0')";
+      }
+      else {
+        $invoiceUpdateFormula = "(next_invoice_number + 1)";
+      }
+      \CRM_Core_DAO::executeQuery("UPDATE financeextras_company SET next_invoice_number = {$invoiceUpdateFormula}  WHERE id = {$org->id}");
+
+      return TRUE;
+    }
+    catch (Throwable $e) {
+      return FALSE;
+    }
   }
 
 }
