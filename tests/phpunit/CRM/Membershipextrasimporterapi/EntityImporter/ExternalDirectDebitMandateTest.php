@@ -67,7 +67,6 @@ class CRM_Membershipextrasimporterapi_EntityImporter_ExternalDirectDebitMandateT
   public function testNoMandateWillBeCreatedIfAnyMainMandateFieldIsMissing() {
     $rowData = [
       'external_direct_debit_mandate_id' => 'TEST_X13',
-      'external_direct_debit_next_available_payment_date' => '20230101000000',
     ];
 
     foreach ($rowData as $fieldName => $rowValue) {
@@ -78,6 +77,31 @@ class CRM_Membershipextrasimporterapi_EntityImporter_ExternalDirectDebitMandateT
 
       $this->assertNull($newMandateId);
     }
+  }
+
+  public function testExternalMandateWillGetUpdatedIfRecurContributionAlreadyHasMandateWithNoNextDate() {
+    $firstImporterRowData = [
+      'external_direct_debit_mandate_id' => 'TEST_X13',
+      'external_direct_debit_mandate_status' => 1,
+      'external_direct_debit_next_available_payment_date' => '20230101000000',
+    ];
+    $mandateImporter = new ExternalDirectDebitMandateImporter($firstImporterRowData, $this->recurContributionId);
+    $firstImportMandateId = $mandateImporter->import();
+
+    $secondImporterRowData = [
+      'external_direct_debit_mandate_id' => 'TEST_X13',
+      'external_direct_debit_mandate_status' => 0,
+    ];
+    $mandateImporter = new ExternalDirectDebitMandateImporter($secondImporterRowData, $this->recurContributionId);
+    $secondImportMandateId = $mandateImporter->import();
+
+    $newMandate = $this->getExternalMandateById($secondImportMandateId);
+    $this->assertEquals($firstImportMandateId, $secondImportMandateId);
+    $this->assertEquals($secondImporterRowData['external_direct_debit_mandate_id'], $newMandate['mandate_id']);
+    $this->assertEquals($secondImporterRowData['external_direct_debit_mandate_status'], $newMandate['mandate_status']);
+
+    $expectedDate = DateTime::createFromFormat('YmdHis', $firstImporterRowData['external_direct_debit_next_available_payment_date']);
+    $this->assertEquals($expectedDate->format('Y-m-d H:i:s'), $newMandate['next_available_payment_date']);
   }
 
   private function getExternalMandateById($mandateId) {
