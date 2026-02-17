@@ -14,6 +14,7 @@ abstract class BaseHeadlessTest extends \PHPUnit\Framework\TestCase implements H
       ->install('uk.co.compucorp.manualdirectdebit')
       ->install('io.compuco.automateddirectdebit')
       ->install('io.compuco.financeextras')
+      ->install('io.compuco.gocardless')
       ->installMe(__DIR__)
       ->apply();
   }

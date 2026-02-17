@@ -17,6 +17,8 @@
   <requires>
     <ext>uk.co.compucorp.membershipextras</ext>
     <ext>nz.co.fuzion.csvimport</ext>
+    <ext>io.compuco.gocardless</ext>
+    <ext>io.compuco.automateddirectdebit</ext>
   </requires>
   <comments>
     Supported CiviCRM versions  :
