@@ -125,25 +125,20 @@ class CRM_Membershipextrasimporterapi_RecurringDonation_CSVRowImporter {
   }
 
   private function createNewContact() {
-    $sqlQuery = "INSERT INTO civicrm_contact (`contact_type`, `first_name`, `last_name`)
-                 VALUES ('Individual', %1, %2)";
-    SQLQueryRunner::executeQuery($sqlQuery, [
-      1 => [$this->rowData['first_name'], 'String'],
-      2 => [$this->rowData['last_name'], 'String'],
-    ]);
+    $contact = \Civi\Api4\Contact::create(FALSE)
+      ->addValue('contact_type', 'Individual')
+      ->addValue('first_name', $this->rowData['first_name'])
+      ->addValue('last_name', $this->rowData['last_name'])
+      ->execute()
+      ->first();
 
-    $dao = SQLQueryRunner::executeQuery('SELECT LAST_INSERT_ID() as contact_id');
-    $dao->fetch();
-    $contactId = $dao->contact_id;
+    \Civi\Api4\Email::create(FALSE)
+      ->addValue('contact_id', $contact['id'])
+      ->addValue('email', $this->rowData['email'])
+      ->addValue('is_primary', TRUE)
+      ->execute();
 
-    $sqlQuery = "INSERT INTO civicrm_email (`contact_id`, `email`, `is_primary`)
-                 VALUES (%1, %2, 1)";
-    SQLQueryRunner::executeQuery($sqlQuery, [
-      1 => [$contactId, 'Integer'],
-      2 => [$this->rowData['email'], 'String'],
-    ]);
-
-    return $contactId;
+    return $contact['id'];
   }
 
 }
