@@ -7,7 +7,7 @@ use CRM_MembershipExtras_Test_Fabricator_Contact as ContactFabricator;
 /**
  * @group headless
  */
-class CRM_Membershipextrasimporterapi_RecurringDonation_EntityImporter_RecurContributionTest extends BaseHeadlessTest {
+class CRM_Membershipextrasimporterapi_RecurringDonation_EntityImporter_RecurContributionTest extends RecurringDonationBaseHeadlessTest {
 
   private $sampleRowData = [
     'recurring_contribution_external_id' => 'rd-test-1',

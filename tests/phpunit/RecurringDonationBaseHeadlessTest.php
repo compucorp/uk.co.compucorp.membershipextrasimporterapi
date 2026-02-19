@@ -3,10 +3,10 @@
 use Civi\Test\HeadlessInterface;
 use Civi\Test\TransactionalInterface;
 
-abstract class BaseHeadlessTest extends \PHPUnit\Framework\TestCase implements HeadlessInterface, TransactionalInterface {
+abstract class RecurringDonationBaseHeadlessTest extends \PHPUnit\Framework\TestCase implements HeadlessInterface, TransactionalInterface {
 
   /**
-   * Sets up Headless, use stock schema,, install extensions.
+   * Sets up Headless, use stock schema, install extensions including GoCardless.
    */
   public function setUpHeadless() {
     return \Civi\Test::headless()
@@ -14,6 +14,7 @@ abstract class BaseHeadlessTest extends \PHPUnit\Framework\TestCase implements H
       ->install('uk.co.compucorp.manualdirectdebit')
       ->install('io.compuco.automateddirectdebit')
       ->install('io.compuco.financeextras')
+      ->install('io.compuco.gocardless')
       ->installMe(__DIR__)
       ->apply();
   }

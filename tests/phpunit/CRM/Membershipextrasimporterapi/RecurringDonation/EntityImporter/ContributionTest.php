@@ -8,7 +8,7 @@ use CRM_MembershipExtras_Test_Fabricator_RecurringContribution as RecurContribut
 /**
  * @group headless
  */
-class CRM_Membershipextrasimporterapi_RecurringDonation_EntityImporter_ContributionTest extends BaseHeadlessTest {
+class CRM_Membershipextrasimporterapi_RecurringDonation_EntityImporter_ContributionTest extends RecurringDonationBaseHeadlessTest {
 
   private $sampleRowData = [
     'recurring_contribution_financial_type' => 'Donation',

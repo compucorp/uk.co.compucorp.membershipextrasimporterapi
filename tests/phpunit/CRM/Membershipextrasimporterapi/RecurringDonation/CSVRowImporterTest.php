@@ -9,7 +9,7 @@ use CRM_MembershipExtras_Test_Fabricator_Contact as ContactFabricator;
 /**
  * @group headless
  */
-class CRM_Membershipextrasimporterapi_RecurringDonation_CSVRowImporterTest extends BaseHeadlessTest {
+class CRM_Membershipextrasimporterapi_RecurringDonation_CSVRowImporterTest extends RecurringDonationBaseHeadlessTest {
 
   private $sampleRowData = [
     'recurring_contribution_external_id' => 'rd-csvrow-1',

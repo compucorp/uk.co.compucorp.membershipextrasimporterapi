@@ -2,6 +2,8 @@
 
 function civicrm_api3_recurring_donation_importer_create($params) {
   try {
+    _civicrm_api3_recurring_donation_importer_check_gocardless();
+
     $importer = new CRM_Membershipextrasimporterapi_RecurringDonation_CSVRowImporter($params);
     $importer->import();
   }
@@ -102,4 +104,18 @@ function _civicrm_api3_recurring_donation_importer_create_spec(&$params) {
     'type' => CRM_Utils_Type::T_STRING,
     'api.required' => 1,
   ];
+}
+
+/**
+ * Checks that the GoCardless extension is installed and enabled.
+ *
+ * @throws \Exception
+ */
+function _civicrm_api3_recurring_donation_importer_check_gocardless() {
+  $statuses = CRM_Extension_System::singleton()->getManager()->getStatuses();
+  $key = 'io.compuco.gocardless';
+
+  if (empty($statuses[$key]) || $statuses[$key] !== CRM_Extension_Manager::STATUS_INSTALLED) {
+    throw new Exception('The GoCardless extension (io.compuco.gocardless) must be installed and enabled to use the Recurring Donation Importer.');
+  }
 }
