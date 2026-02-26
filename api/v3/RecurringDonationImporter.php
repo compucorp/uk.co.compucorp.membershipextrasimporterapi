@@ -15,30 +15,37 @@ function civicrm_api3_recurring_donation_importer_create($params) {
 }
 
 function _civicrm_api3_recurring_donation_importer_create_spec(&$params) {
+  $usage = ['import' => TRUE];
+
   // Contact fields
   $params['contact_id'] = [
     'title' => 'Contact Id',
     'type' => CRM_Utils_Type::T_INT,
+    'usage' => $usage,
   ];
 
   $params['contact_external_id'] = [
     'title' => 'Contact External Id',
     'type' => CRM_Utils_Type::T_STRING,
+    'usage' => $usage,
   ];
 
   $params['first_name'] = [
     'title' => 'First Name',
     'type' => CRM_Utils_Type::T_STRING,
+    'usage' => $usage,
   ];
 
   $params['last_name'] = [
     'title' => 'Last Name',
     'type' => CRM_Utils_Type::T_STRING,
+    'usage' => $usage,
   ];
 
   $params['email'] = [
     'title' => 'Email',
     'type' => CRM_Utils_Type::T_STRING,
+    'usage' => $usage,
   ];
 
   // Recurring Contribution fields
@@ -46,56 +53,66 @@ function _civicrm_api3_recurring_donation_importer_create_spec(&$params) {
     'title' => 'Recurring Contribution External Id',
     'type' => CRM_Utils_Type::T_STRING,
     'api.required' => 1,
+    'usage' => $usage,
   ];
 
   $params['recurring_contribution_amount'] = [
     'title' => 'Recurring Contribution Amount',
     'type' => CRM_Utils_Type::T_MONEY,
     'api.required' => 1,
+    'usage' => $usage,
   ];
 
   $params['recurring_contribution_currency'] = [
     'title' => 'Recurring Contribution Currency',
     'type' => CRM_Utils_Type::T_STRING,
     'api.required' => 1,
+    'usage' => $usage,
   ];
 
   $params['recurring_contribution_frequency_unit'] = [
     'title' => 'Recurring Contribution Frequency Unit',
     'type' => CRM_Utils_Type::T_STRING,
     'api.required' => 1,
+    'usage' => $usage,
   ];
 
   $params['recurring_contribution_cycle_day'] = [
     'title' => 'Recurring Contribution Cycle Day',
     'type' => CRM_Utils_Type::T_INT,
+    'usage' => $usage,
   ];
 
   $params['recurring_contribution_start_date'] = [
     'title' => 'Recurring Contribution Start Date',
     'type' => CRM_Utils_Type::T_STRING,
     'api.required' => 1,
+    'usage' => $usage,
   ];
 
   $params['recurring_contribution_next_sched_date'] = [
     'title' => 'Recurring Contribution Next Scheduled Date',
     'type' => CRM_Utils_Type::T_STRING,
     'api.required' => 1,
+    'usage' => $usage,
   ];
 
   $params['recurring_contribution_financial_type'] = [
     'title' => 'Recurring Contribution Financial Type',
     'type' => CRM_Utils_Type::T_STRING,
+    'usage' => $usage,
   ];
 
   $params['recurring_contribution_payment_instrument'] = [
     'title' => 'Recurring Contribution Payment Instrument',
     'type' => CRM_Utils_Type::T_STRING,
+    'usage' => $usage,
   ];
 
   $params['recurring_contribution_description'] = [
     'title' => 'Recurring Contribution Description',
     'type' => CRM_Utils_Type::T_STRING,
+    'usage' => $usage,
   ];
 
   // GoCardless fields
@@ -103,6 +120,7 @@ function _civicrm_api3_recurring_donation_importer_create_spec(&$params) {
     'title' => 'GoCardless Mandate Id',
     'type' => CRM_Utils_Type::T_STRING,
     'api.required' => 1,
+    'usage' => $usage,
   ];
 }
 
