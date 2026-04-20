@@ -211,8 +211,13 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItem {
       $subscriptionLineItemStartDate = $this->membership['start_date'];
     }
     else {
-      $subscriptionLineItemStartDate = DateTime::createFromFormat('Y-m-d', $this->contribution['receive_date']);
-      $subscriptionLineItemStartDate = $subscriptionLineItemStartDate->format('Y-m-d');
+      try {
+        $subscriptionLineItemStartDate = new DateTime($this->contribution['receive_date']);
+        $subscriptionLineItemStartDate = $subscriptionLineItemStartDate->format('Y-m-d');
+      }
+      catch (Throwable $e) {
+        $subscriptionLineItemStartDate = date('Y-m-d');
+      }
     }
 
     $sqlParams = [
@@ -221,7 +226,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItem {
       3 => [$subscriptionLineItemStartDate, 'String'],
       4 => [1, 'Integer'],
     ];
-    $sqlQuery = "INSERT INTO `membershipextras_subscription_line` (`contribution_recur_id` , `line_item_id`, `start_date`, `auto_renew`) 
+    $sqlQuery = "INSERT INTO `membershipextras_subscription_line` (`contribution_recur_id` , `line_item_id`, `start_date`, `auto_renew`)
                  VALUES (%1, %2, %3, %4)";
     SQLQueryRunner::executeQuery($sqlQuery, $sqlParams);
   }
@@ -292,7 +297,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItem {
 
   private function getMembershipPriceFieldValueDetails() {
     $membershipTypeId = $this->membership['membership_type_id'];
-    $dao = SQLQueryRunner::executeQuery("SELECT * FROM civicrm_price_field_value WHERE membership_type_id = {$membershipTypeId} 
+    $dao = SQLQueryRunner::executeQuery("SELECT * FROM civicrm_price_field_value WHERE membership_type_id = {$membershipTypeId}
                                        ORDER BY id ASC LIMIT 1");
     $dao->fetch();
 
@@ -369,7 +374,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItem {
       9 => [$this->contribution['receive_date'], 'String'],
     ];
     $sqlQuery = "INSERT INTO `civicrm_financial_item` (`contact_id` , `description` , `amount` , `currency` ,
-                 `financial_account_id` , `status_id` , `entity_table` , `entity_id`, `transaction_date`) 
+                 `financial_account_id` , `status_id` , `entity_table` , `entity_id`, `transaction_date`)
                  VALUES (%1, %2, %3, %4, %5, %6, %7, %8, %9)";
     SQLQueryRunner::executeQuery($sqlQuery, $sqlParams);
 
@@ -400,7 +405,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItem {
       9 => [$this->contribution['receive_date'], 'String'],
     ];
     $sqlQuery = "INSERT INTO `civicrm_financial_item` (`contact_id` , `description` , `amount` , `currency` ,
-                 `financial_account_id` , `status_id` , `entity_table` , `entity_id`, `transaction_date`) 
+                 `financial_account_id` , `status_id` , `entity_table` , `entity_id`, `transaction_date`)
                  VALUES (%1, %2, %3, %4, %5, %6, %7, %8, %9)";
     SQLQueryRunner::executeQuery($sqlQuery, $sqlParams);
 
@@ -411,7 +416,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItem {
   }
 
   private function getFinancialAccountIdByRelationship($financialTypeId, $accountRelationship) {
-    $sqlQuery = "SELECT financial_account_id FROM civicrm_entity_financial_account 
+    $sqlQuery = "SELECT financial_account_id FROM civicrm_entity_financial_account
                    WHERE entity_table = 'civicrm_financial_type' AND entity_id = {$financialTypeId} AND account_relationship = {$accountRelationship}";
     $result = SQLQueryRunner::executeQuery($sqlQuery);
     $result->fetch();
@@ -457,7 +462,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItem {
       3 => [$this->getContributionFinancialTrxnId(), 'Integer'],
       4 => [$amount, 'Money'],
     ];
-    $sqlQuery = "INSERT INTO `civicrm_entity_financial_trxn` (`entity_table` , `entity_id` , `financial_trxn_id` , `amount`) 
+    $sqlQuery = "INSERT INTO `civicrm_entity_financial_trxn` (`entity_table` , `entity_id` , `financial_trxn_id` , `amount`)
                  VALUES (%1, %2, %3, %4)";
     SQLQueryRunner::executeQuery($sqlQuery, $sqlParams);
   }
@@ -469,7 +474,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItem {
       3 => [$this->getContributionFinancialTrxnId(), 'Integer'],
       4 => [$taxAmount, 'Money'],
     ];
-    $sqlQuery = "INSERT INTO `civicrm_entity_financial_trxn` (`entity_table` , `entity_id` , `financial_trxn_id` , `amount`) 
+    $sqlQuery = "INSERT INTO `civicrm_entity_financial_trxn` (`entity_table` , `entity_id` , `financial_trxn_id` , `amount`)
                  VALUES (%1, %2, %3, %4)";
     SQLQueryRunner::executeQuery($sqlQuery, $sqlParams);
   }
@@ -520,9 +525,9 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItem {
     SQLQueryRunner::executeQuery($sqlQuery, $sqlParams);
 
     $trxSqlParams[1] = [$totalAmount, 'Money'];
-    $sqlQuery = "UPDATE `civicrm_entity_financial_trxn` ceft 
-                 INNER JOIN civicrm_financial_trxn cft ON ceft.financial_trxn_id = cft.id 
-                 SET ceft.amount = ceft.amount + %1, cft.total_amount = cft.total_amount + %1, cft.net_amount = cft.net_amount + %1 
+    $sqlQuery = "UPDATE `civicrm_entity_financial_trxn` ceft
+                 INNER JOIN civicrm_financial_trxn cft ON ceft.financial_trxn_id = cft.id
+                 SET ceft.amount = ceft.amount + %1, cft.total_amount = cft.total_amount + %1, cft.net_amount = cft.net_amount + %1
                  WHERE ceft.entity_table = 'civicrm_contribution' AND ceft.entity_id = {$this->contributionId}";
     SQLQueryRunner::executeQuery($sqlQuery, $trxSqlParams);
   }
