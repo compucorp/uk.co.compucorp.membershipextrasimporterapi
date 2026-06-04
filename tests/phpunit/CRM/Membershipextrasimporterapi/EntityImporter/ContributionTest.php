@@ -25,7 +25,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_ContributionTest extends Ba
 
   private $testPaymentProcessorId = 1;
 
-  public function setUp() {
+  public function setUp(): void {
     $this->contactId = ContactFabricator::fabricate()['id'];
 
     $recurContributionParams = ['contact_id' => $this->contactId, 'amount' => 50, 'frequency_interval' => 1, 'payment_processor_id' => $this->testPaymentProcessorId];
