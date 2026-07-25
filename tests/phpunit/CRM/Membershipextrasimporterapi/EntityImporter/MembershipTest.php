@@ -27,7 +27,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_MembershipTest extends Base
 
   private $recurContributionId;
 
-  public function setUp() {
+  public function setUp(): void {
     $this->contactId = ContactFabricator::fabricate()['id'];
 
     $recurContributionParams = ['contact_id' => $this->contactId, 'amount' => 50, 'frequency_interval' => 1];

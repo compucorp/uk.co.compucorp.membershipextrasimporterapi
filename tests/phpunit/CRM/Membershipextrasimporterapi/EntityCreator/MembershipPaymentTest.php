@@ -18,7 +18,7 @@ class CRM_Membershipextrasimporterapi_EntityCreator_MembershipPaymentTest extend
 
   private $contributionId;
 
-  public function setUp() {
+  public function setUp(): void {
     $this->contactId = ContactFabricator::fabricate()['id'];
 
     MembershipTypeFabricator::fabricate(['name' => 'Student', 'minimum_fee' => 50]);

@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="iso-8859-1" ?>
+
+<table>
+  <base>CRM/Membershipextrasimporterapi</base>
+  <class>RecurringDonationImporter</class>
+  <name>recurringdonationimporter_fake_entity</name>
+  <log>false</log>
+
+  <field>
+    <name>id</name>
+    <title>Id</title>
+    <type>int unsigned</type>
+    <required>true</required>
+    <html>
+      <label>Id</label>
+    </html>
+    <comment>Unique ID</comment>
+  </field>
+  <primaryKey>
+    <name>id</name>
+    <autoincrement>true</autoincrement>
+  </primaryKey>
+
+  <!-- Contact fields -->
+  <field>
+    <name>contact_id</name>
+    <title>Contact Id</title>
+    <type>int unsigned</type>
+    <html>
+      <label>Contact Id</label>
+    </html>
+  </field>
+  <field>
+    <name>contact_external_id</name>
+    <title>Contact External Id</title>
+    <type>varchar</type>
+    <length>255</length>
+    <html>
+      <label>Contact External Id</label>
+    </html>
+  </field>
+  <field>
+    <name>first_name</name>
+    <title>First Name</title>
+    <type>varchar</type>
+    <length>255</length>
+    <html>
+      <label>First Name</label>
+    </html>
+  </field>
+  <field>
+    <name>last_name</name>
+    <title>Last Name</title>
+    <type>varchar</type>
+    <length>255</length>
+    <html>
+      <label>Last Name</label>
+    </html>
+  </field>
+  <field>
+    <name>email</name>
+    <title>Email</title>
+    <type>varchar</type>
+    <length>255</length>
+    <html>
+      <label>Email</label>
+    </html>
+  </field>
+
+  <!-- Recurring Contribution fields -->
+  <field>
+    <name>recurring_contribution_external_id</name>
+    <title>Recurring Contribution External Id</title>
+    <type>varchar</type>
+    <length>255</length>
+    <required>true</required>
+    <html>
+      <label>Recurring Contribution External Id</label>
+    </html>
+  </field>
+  <field>
+    <name>recurring_contribution_amount</name>
+    <title>Recurring Contribution Amount</title>
+    <type>decimal</type>
+    <required>true</required>
+    <html>
+      <label>Recurring Contribution Amount</label>
+    </html>
+  </field>
+  <field>
+    <name>recurring_contribution_currency</name>
+    <title>Recurring Contribution Currency</title>
+    <type>varchar</type>
+    <length>255</length>
+    <required>true</required>
+    <html>
+      <label>Recurring Contribution Currency</label>
+    </html>
+  </field>
+  <field>
+    <name>recurring_contribution_frequency_unit</name>
+    <title>Recurring Contribution Frequency Unit</title>
+    <type>varchar</type>
+    <length>255</length>
+    <required>true</required>
+    <html>
+      <label>Recurring Contribution Frequency Unit</label>
+    </html>
+  </field>
+  <field>
+    <name>recurring_contribution_cycle_day</name>
+    <title>Recurring Contribution Cycle Day</title>
+    <type>int unsigned</type>
+    <html>
+      <label>Recurring Contribution Cycle Day</label>
+    </html>
+  </field>
+  <field>
+    <name>recurring_contribution_start_date</name>
+    <title>Recurring Contribution Start Date</title>
+    <type>varchar</type>
+    <length>255</length>
+    <required>true</required>
+    <html>
+      <label>Recurring Contribution Start Date</label>
+    </html>
+  </field>
+  <field>
+    <name>recurring_contribution_next_sched_date</name>
+    <title>Recurring Contribution Next Scheduled Date</title>
+    <type>varchar</type>
+    <length>255</length>
+    <required>true</required>
+    <html>
+      <label>Recurring Contribution Next Scheduled Date</label>
+    </html>
+  </field>
+  <field>
+    <name>recurring_contribution_financial_type</name>
+    <title>Recurring Contribution Financial Type</title>
+    <type>varchar</type>
+    <length>255</length>
+    <html>
+      <label>Recurring Contribution Financial Type</label>
+    </html>
+  </field>
+  <field>
+    <name>recurring_contribution_payment_instrument</name>
+    <title>Recurring Contribution Payment Instrument</title>
+    <type>varchar</type>
+    <length>255</length>
+    <html>
+      <label>Recurring Contribution Payment Instrument</label>
+    </html>
+  </field>
+  <field>
+    <name>recurring_contribution_description</name>
+    <title>Recurring Contribution Description</title>
+    <type>varchar</type>
+    <length>255</length>
+    <html>
+      <label>Recurring Contribution Description</label>
+    </html>
+  </field>
+
+  <!-- GoCardless fields -->
+  <field>
+    <name>gocardless_mandate_id</name>
+    <title>GoCardless Mandate Id</title>
+    <type>varchar</type>
+    <length>255</length>
+    <required>true</required>
+    <html>
+      <label>GoCardless Mandate Id</label>
+    </html>
+  </field>
+</table>

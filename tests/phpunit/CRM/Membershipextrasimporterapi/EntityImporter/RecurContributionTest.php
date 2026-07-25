@@ -25,7 +25,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_RecurContributionTest exten
 
   private $contactId;
 
-  public function setUp() {
+  public function setUp(): void {
     $this->contactId = ContactFabricator::fabricate()['id'];
   }
 
