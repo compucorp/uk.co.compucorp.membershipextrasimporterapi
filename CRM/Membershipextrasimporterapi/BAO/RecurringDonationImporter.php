@@ -1,0 +1,4 @@
+<?php
+class CRM_Membershipextrasimporterapi_BAO_RecurringDonationImporter extends CRM_Membershipextrasimporterapi_DAO_RecurringDonationImporter {
+
+}

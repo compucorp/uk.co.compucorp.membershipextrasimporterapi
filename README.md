@@ -1,24 +1,39 @@
 # Membershipextras Importer API
 
-This extension creates new API Endpoint `MembershipextrasImporter` that can be used within [CSV Importer](https://github.com/eileenmcnaughton/nz.co.fuzion.csvimport) extension,
-which allows importing Payment Plan membership orders and direct debit information using the data model used in [Membershipextras](https://github.com/compucorp/uk.co.compucorp.membershipextras) suite.
+This extension provides API endpoints for importing data via the [CSV Importer](https://github.com/eileenmcnaughton/nz.co.fuzion.csvimport) extension, using the data model from the [Membershipextras](https://github.com/compucorp/uk.co.compucorp.membershipextras) suite.
 
-More details about the functionality of this importer and fields mapping are available here (not publicly available document yet):
+## API Endpoints
+
+### MembershipextrasImporter
+Imports Payment Plan membership orders and direct debit information.
+
+More details about the functionality and fields mapping are available here (not publicly available document yet):
 https://compucorp.atlassian.net/wiki/spaces/ME/pages/2307489795/Membership+importer+Ready+for+kickoff+Payment+plan+importer
+
+### RecurringDonationImporter
+Imports recurring donations with GoCardless integration. For each CSV row, the importer:
+
+1. Validates the GoCardless mandate
+2. Resolves or creates a contact (by ID, external ID, email, or first+last+email)
+3. Creates a recurring contribution (status: In Progress)
+4. Creates a first pending contribution with line items
+5. Creates a GoCardless subscription
 
 # Dependencies
 To be able to use this extension you will need :
 
 - [Membershipextras extension](https://github.com/compucorp/uk.co.compucorp.membershipextras) : Which provides support for payment plan memberships.
 - [CSV Importer extension](https://github.com/eileenmcnaughton/nz.co.fuzion.csvimport) : Which provides the mechanism to import CSV files using any API Endpoint.
+- [GoCardless extension](https://github.com/compucorp/io.compuco.gocardless) : Required for the RecurringDonationImporter endpoint.
+- [Automated Direct Debit extension](https://github.com/compucorp/io.compuco.automateddirectdebit) : Required for the RecurringDonationImporter endpoint.
 
 And optionally :
 - [Manual Direct debit extension](https://github.com/compucorp/uk.co.compucorp.manualdirectdebit) : In case you have payment plan orders paid with Direct debit.
 
 ## Usage
 
-As mentioned above, this extension is to be used within  [CSV Importer](https://github.com/eileenmcnaughton/nz.co.fuzion.csvimport) extension, by going
-to the extension import screen and selecting `MembershipextrasImporter` in "Entity To Import" select list:
+This extension is to be used within [CSV Importer](https://github.com/eileenmcnaughton/nz.co.fuzion.csvimport) extension, by going
+to the extension import screen and selecting `MembershipextrasImporter` or `RecurringDonationImporter` in "Entity To Import" select list:
 
 ![1](https://user-images.githubusercontent.com/6275540/115318172-e0d96d00-a185-11eb-9350-704a0f2370c6.png)
 

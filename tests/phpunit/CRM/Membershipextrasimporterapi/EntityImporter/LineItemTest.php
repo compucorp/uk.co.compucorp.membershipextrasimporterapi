@@ -29,7 +29,7 @@ class CRM_Membershipextrasimporterapi_EntityImporter_LineItemTest extends BaseHe
 
   private $studentMembershipTypeId;
 
-  public function setUp() {
+  public function setUp(): void {
     $this->contactId = ContactFabricator::fabricate()['id'];
 
     $recurContributionParams = ['contact_id' => $this->contactId, 'amount' => 0, 'frequency_interval' => 1, 'payment_processor_id' => 1];
